@@ -17,14 +17,16 @@ static const char *TAG = "everblu_cyble";
 void EverbluCyble::setup()
 {
 
-  ESP_LOGI(TAG,
-           "Initialisation EverBlu Cyble");
+  ESP_LOGI(TAG, "Initialisation EverBlu Cyble");
 
 
   ESP_LOGI(TAG,
-           "Compteur : %s",
+           "Identifiant compteur : %s",
            this->meter_id_.c_str());
 
+
+
+  // Configuration des broches CC1101
 
   if (this->cs_pin_ != nullptr)
   {
@@ -45,32 +47,45 @@ void EverbluCyble::setup()
 
 
 
-  // Initialisation CC1101
+  // Passage des broches au driver CC1101
 
-  cc1101_init();
-
-
-  uint8_t version =
-      cc1101_get_version();
+  cc1101.set_cs_pin(
+      this->cs_pin_
+  );
 
 
-  ESP_LOGI(TAG,
-           "CC1101 version: 0x%02X",
-           version);
+  cc1101.set_gdo0_pin(
+      this->gdo0_pin_
+  );
 
 
+  cc1101.set_gdo2_pin(
+      this->gdo2_pin_
+  );
+
+
+
+  // Initialisation radio
+
+  cc1101.setup();
+
+
+  cc1101.receive();
+
+
+
+  // Initialisation protocole
 
   protocol_init();
 
-
-  cc1101_rx();
 
 
   this->initialized_ = true;
 
 
   ESP_LOGI(TAG,
-           "EverBlu prêt");
+           "EverBlu Cyble prêt");
+
 }
 
 
@@ -84,8 +99,11 @@ void EverbluCyble::loop()
     return;
 
 
+
   uint32_t now = millis();
 
+
+  // Lecture toutes les secondes
 
   if (now - this->last_read_ < 1000)
     return;
@@ -99,43 +117,83 @@ void EverbluCyble::loop()
 
 
   uint8_t length =
-      cc1101_read_fifo(buffer);
+      cc1101.read_fifo(buffer);
 
 
 
   if (length == 0)
+  {
     return;
+  }
+
+
+
+  ESP_LOGD(TAG,
+           "Trame radio reçue (%u octets)",
+           length);
 
 
 
   EverbluData data;
 
 
-  if (protocol_decode(
+
+  if (!protocol_decode(
           buffer,
           length,
           &data))
   {
+    ESP_LOGD(TAG,
+             "Trame non reconnue");
 
-
-    ESP_LOGI(TAG,
-             "Trame EverBlu reçue");
-
-
-    if (data.valid)
-    {
-
-      // Publication Home Assistant
-
-      this->publish_state(
-          data.index / 1000.0
-      );
-
-    }
-
+    return;
   }
 
+
+
+
+  // Vérification compteur
+
+  if (!data.valid)
+  {
+    return;
+  }
+
+
+
+
+  // Filtrage identifiant compteur
+
+  if (data.meter_id != this->meter_id_)
+  {
+
+    ESP_LOGD(TAG,
+             "Compteur différent ignoré");
+
+    return;
+  }
+
+
+
+
+
+  // Publication index eau
+
+  float volume =
+      data.index / 1000.0f;
+
+
+
+  ESP_LOGI(TAG,
+           "Index eau : %.3f m3",
+           volume);
+
+
+
+  this->publish_state(volume);
+
 }
+
 
 
 
