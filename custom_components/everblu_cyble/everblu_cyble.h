@@ -2,28 +2,29 @@
 
 #include "esphome/core/component.h"
 #include "esphome/components/sensor/sensor.h"
-#include "esphome/components/spi/spi.h"
+
 
 namespace esphome {
 namespace everblu_cyble {
 
 
-class EverbluCyble : public Component, public spi::SPIDevice {
+class EverbluCyble : public Component {
+
  public:
 
-  // Initialisation ESPHome
+  // Cycle ESPHome
   void setup() override;
 
-  // Boucle principale
   void loop() override;
 
-  // Niveau de log
+
   float get_setup_priority() const override {
     return setup_priority::DATA;
   }
 
 
-  // Configuration SPI
+  // Configuration CS CC1101
+
   void set_cs_pin(GPIOPin *cs) {
     this->cs_pin_ = cs;
   }
@@ -35,9 +36,11 @@ class EverbluCyble : public Component, public spi::SPIDevice {
     this->index_sensor_ = sensor;
   }
 
+
   void set_battery_sensor(sensor::Sensor *sensor) {
     this->battery_sensor_ = sensor;
   }
+
 
   void set_rssi_sensor(sensor::Sensor *sensor) {
     this->rssi_sensor_ = sensor;
@@ -54,8 +57,8 @@ class EverbluCyble : public Component, public spi::SPIDevice {
   sensor::Sensor *rssi_sensor_{nullptr};
 
 
-  // Gestion interne
   bool initialized_{false};
+
 
   uint32_t last_read_{0};
 
@@ -63,5 +66,5 @@ class EverbluCyble : public Component, public spi::SPIDevice {
 };
 
 
-}  // namespace everblu_cyble
-}  // namespace esphome
+} // namespace everblu_cyble
+} // namespace esphome
