@@ -4,80 +4,76 @@
 #include "esphome/core/gpio.h"
 #include "esphome/components/sensor/sensor.h"
 
+#include <string>
+
 
 namespace esphome {
 namespace everblu_cyble {
 
 
-class EverbluCyble : public Component {
+class EverbluCyble : public Component, public sensor::Sensor {
 
  public:
 
-  // Initialisation ESPHome
+  // Cycle ESPHome
   void setup() override;
 
-
-  // Boucle principale
   void loop() override;
 
 
-  // Priorité de démarrage
   float get_setup_priority() const override {
     return setup_priority::DATA;
   }
 
 
-  // Configuration broche CS du CC1101
-  void set_cs_pin(GPIOPin *cs) {
-    this->cs_pin_ = cs;
+  // Identifiant compteur
+
+  void set_meter_id(const std::string &id) {
+    this->meter_id_ = id;
   }
 
 
-  // Capteur index compteur
-  void set_index_sensor(sensor::Sensor *sensor) {
-    this->index_sensor_ = sensor;
+  // Broche CS CC1101
+
+  void set_cs_pin(GPIOPin *pin) {
+    this->cs_pin_ = pin;
   }
 
 
-  // Capteur batterie
-  void set_battery_sensor(sensor::Sensor *sensor) {
-    this->battery_sensor_ = sensor;
+  // GDO0 CC1101
+
+  void set_gdo0_pin(GPIOPin *pin) {
+    this->gdo0_pin_ = pin;
   }
 
 
-  // Capteur RSSI
-  void set_rssi_sensor(sensor::Sensor *sensor) {
-    this->rssi_sensor_ = sensor;
+  // GDO2 CC1101
+
+  void set_gdo2_pin(GPIOPin *pin) {
+    this->gdo2_pin_ = pin;
   }
 
 
  protected:
 
-  // Broche Chip Select CC1101
+
+  std::string meter_id_;
+
+
   GPIOPin *cs_pin_{nullptr};
 
+  GPIOPin *gdo0_pin_{nullptr};
 
-  // Capteurs Home Assistant
+  GPIOPin *gdo2_pin_{nullptr};
 
-  sensor::Sensor *index_sensor_{nullptr};
-
-  sensor::Sensor *battery_sensor_{nullptr};
-
-  sensor::Sensor *rssi_sensor_{nullptr};
-
-
-  // Etat interne
 
   bool initialized_{false};
 
 
-  // Temporisation lecture radio
-
   uint32_t last_read_{0};
-
 
 };
 
 
-}  // namespace everblu_cyble
-}  // namespace esphome
+} // namespace everblu_cyble
+} // namespace esphome
