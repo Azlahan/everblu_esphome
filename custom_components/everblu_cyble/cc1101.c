@@ -1,70 +1,80 @@
 #include "cc1101.h"
 
 
+// Etat interne du driver
+static uint8_t initialized = 0;
+
+
 // --------------------------------------------------
-// Fonctions bas niveau SPI
-// À connecter ensuite à ESP32 SPI
+// SPI - à relier au wrapper ESPHome C++
 // --------------------------------------------------
 
 void cc1101_write_reg(uint8_t addr, uint8_t value)
 {
-    // TODO SPI WRITE
+    // Implémentation SPI à venir
 }
 
 
 uint8_t cc1101_read_reg(uint8_t addr)
 {
-    // TODO SPI READ
-
+    // Implémentation SPI à venir
     return 0;
 }
 
 
 void cc1101_write_burst(uint8_t addr, uint8_t *buffer, uint8_t length)
 {
-    // TODO SPI BURST WRITE
+    // Implémentation SPI burst à venir
 }
 
 
 void cc1101_read_burst(uint8_t addr, uint8_t *buffer, uint8_t length)
 {
-    // TODO SPI BURST READ
+    // Implémentation SPI burst à venir
 }
 
 
 void cc1101_strobe(uint8_t command)
 {
-    // TODO COMMAND STROBE
+    // Commande CC1101
 }
 
 
 // --------------------------------------------------
-// Initialisation CC1101
+// Reset CC1101
 // --------------------------------------------------
 
 void cc1101_reset(void)
 {
-    // TODO RESET PIN
+    cc1101_strobe(SRES);
 }
 
+
+// --------------------------------------------------
+// Configuration radio
+// --------------------------------------------------
 
 void cc1101_init(void)
 {
     /*
-       Initialisation radio à compléter avec
-       les valeurs EverBlu du fichier original :
+      Configuration initiale CC1101
 
-       IOCFGx
-       FIFOTHR
-       SYNC
-       PKTCTRL
-       FREQ
-       MDMCFG
-       DEVIATN
-       AGC
-       FSCAL
+      Les valeurs exactes EverBlu seront ajoutées ici :
+
+      FREQ2/FREQ1/FREQ0
+      MDMCFG4
+      MDMCFG3
+      MDMCFG2
+      DEVIATN
+      SYNC1/SYNC0
+      PKTCTRL
+      AGC
     */
 
+
+    cc1101_reset();
+
+    initialized = 1;
 }
 
 
@@ -74,12 +84,18 @@ void cc1101_init(void)
 
 void cc1101_rx(void)
 {
+    if (!initialized)
+        return;
+
     cc1101_strobe(SRX);
 }
 
 
 void cc1101_tx(void)
 {
+    if (!initialized)
+        return;
+
     cc1101_strobe(STX);
 }
 
@@ -90,22 +106,22 @@ void cc1101_tx(void)
 
 uint8_t cc1101_read_fifo(uint8_t *buffer)
 {
-    uint8_t length = 0;
+    if (!initialized)
+        return 0;
 
-    // TODO lecture RX FIFO
-
-    return length;
+    return 0;
 }
 
 
 void cc1101_write_fifo(uint8_t *buffer, uint8_t length)
 {
-    // TODO écriture TX FIFO
+    if (!initialized)
+        return;
 }
 
 
 // --------------------------------------------------
-// Identification puce
+// Identification
 // --------------------------------------------------
 
 uint8_t cc1101_get_version(void)
