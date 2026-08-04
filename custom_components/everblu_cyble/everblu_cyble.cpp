@@ -21,12 +21,13 @@ void EverbluCyble::setup()
 
 
   ESP_LOGI(TAG,
-           "Identifiant compteur : %s",
-           this->meter_id_.c_str());
+           "Compteur configuré : %u",
+           this->meter_id_);
 
 
 
-  // Configuration des broches CC1101
+
+  // Initialisation des GPIO
 
   if (this->cs_pin_ != nullptr)
   {
@@ -47,7 +48,8 @@ void EverbluCyble::setup()
 
 
 
-  // Passage des broches au driver CC1101
+
+  // Configuration CC1101
 
   cc1101.set_cs_pin(
       this->cs_pin_
@@ -64,8 +66,6 @@ void EverbluCyble::setup()
   );
 
 
-
-  // Initialisation radio
 
   cc1101.setup();
 
@@ -84,10 +84,9 @@ void EverbluCyble::setup()
 
 
   ESP_LOGI(TAG,
-           "EverBlu Cyble prêt");
+           "EverBlu prêt");
 
 }
-
 
 
 
@@ -103,7 +102,6 @@ void EverbluCyble::loop()
   uint32_t now = millis();
 
 
-  // Lecture toutes les secondes
 
   if (now - this->last_read_ < 1000)
     return;
@@ -113,7 +111,9 @@ void EverbluCyble::loop()
 
 
 
+
   uint8_t buffer[CC1101_FIFO_SIZE];
+
 
 
   uint8_t length =
@@ -129,8 +129,9 @@ void EverbluCyble::loop()
 
 
   ESP_LOGD(TAG,
-           "Trame radio reçue (%u octets)",
+           "Trame reçue : %u octets",
            length);
+
 
 
 
@@ -143,6 +144,7 @@ void EverbluCyble::loop()
           length,
           &data))
   {
+
     ESP_LOGD(TAG,
              "Trame non reconnue");
 
@@ -152,8 +154,6 @@ void EverbluCyble::loop()
 
 
 
-  // Vérification compteur
-
   if (!data.valid)
   {
     return;
@@ -162,13 +162,15 @@ void EverbluCyble::loop()
 
 
 
-  // Filtrage identifiant compteur
+  // Filtrage compteur
 
-  if (data.meter_id != this->meter_id_)
+  if (this->meter_id_ != 0 &&
+      data.meter_id != this->meter_id_)
   {
 
     ESP_LOGD(TAG,
-             "Compteur différent ignoré");
+             "Compteur ignoré : %u",
+             data.meter_id);
 
     return;
   }
@@ -176,8 +178,6 @@ void EverbluCyble::loop()
 
 
 
-
-  // Publication index eau
 
   float volume =
       data.index / 1000.0f;
