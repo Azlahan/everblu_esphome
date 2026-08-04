@@ -4,7 +4,6 @@
 #include "protocol.h"
 
 #include "esphome/core/log.h"
-#include "esphome/core/hal.h"
 
 
 namespace esphome {
@@ -14,138 +13,128 @@ namespace everblu_cyble {
 static const char *TAG = "everblu_cyble";
 
 
-// --------------------------------------------------
-// Initialisation du composant
-// --------------------------------------------------
 
 void EverbluCyble::setup()
 {
-    ESP_LOGI(TAG, "Démarrage EverBlu Cyble");
+
+  ESP_LOGI(TAG,
+           "Initialisation EverBlu Cyble");
 
 
-    // Initialisation de la broche CS si présente
-    if (this->cs_pin_ != nullptr)
-    {
-        this->cs_pin_->setup();
-    }
+  ESP_LOGI(TAG,
+           "Compteur : %s",
+           this->meter_id_.c_str());
 
 
-    // Initialisation radio CC1101
-    cc1101_component_init();
+  if (this->cs_pin_ != nullptr)
+  {
+    this->cs_pin_->setup();
+  }
 
 
-    // Test communication CC1101
-    if (!cc1101_component_test())
-    {
-        ESP_LOGE(TAG,
-                 "Erreur communication CC1101");
-
-        return;
-    }
+  if (this->gdo0_pin_ != nullptr)
+  {
+    this->gdo0_pin_->setup();
+  }
 
 
-    // Initialisation protocole
-    protocol_init();
+  if (this->gdo2_pin_ != nullptr)
+  {
+    this->gdo2_pin_->setup();
+  }
 
 
-    // Passage en écoute
-    cc1101_rx();
+
+  // Initialisation CC1101
+
+  cc1101_init();
 
 
-    this->initialized_ = true;
+  uint8_t version =
+      cc1101_get_version();
 
 
-    ESP_LOGI(TAG,
-             "EverBlu Cyble prêt");
+  ESP_LOGI(TAG,
+           "CC1101 version: 0x%02X",
+           version);
+
+
+
+  protocol_init();
+
+
+  cc1101_rx();
+
+
+  this->initialized_ = true;
+
+
+  ESP_LOGI(TAG,
+           "EverBlu prêt");
 }
 
 
 
-// --------------------------------------------------
-// Boucle principale
-// --------------------------------------------------
+
 
 void EverbluCyble::loop()
 {
-    if (!this->initialized_)
-        return;
+
+  if (!this->initialized_)
+    return;
 
 
-    uint32_t now = millis();
+  uint32_t now = millis();
 
 
-    if (now - this->last_read_ < 1000)
-        return;
+  if (now - this->last_read_ < 1000)
+    return;
 
 
-    this->last_read_ = now;
-
-
-
-    /*
-        Future séquence :
-
-        1) Lire FIFO CC1101
-        2) Récupérer la trame
-        3) protocol_decode()
-        4) Publier les capteurs HA
-
-    */
-
-
-    uint8_t buffer[CC1101_FIFO_SIZE];
-
-
-    uint8_t length =
-        cc1101_read_fifo(buffer);
+  this->last_read_ = now;
 
 
 
-    if (length == 0)
-    {
-        ESP_LOGD(TAG,
-                 "Pas de trame");
-        return;
-    }
+  uint8_t buffer[CC1101_FIFO_SIZE];
+
+
+  uint8_t length =
+      cc1101_read_fifo(buffer);
 
 
 
-    EverbluData data;
+  if (length == 0)
+    return;
 
 
-    if (protocol_decode(
-            buffer,
-            length,
-            &data))
+
+  EverbluData data;
+
+
+  if (protocol_decode(
+          buffer,
+          length,
+          &data))
+  {
+
+
+    ESP_LOGI(TAG,
+             "Trame EverBlu reçue");
+
+
+    if (data.valid)
     {
 
-        ESP_LOGI(TAG,
-                 "Trame EverBlu valide");
+      // Publication Home Assistant
 
+      this->publish_state(
+          data.index / 1000.0
+      );
 
-        if (this->index_sensor_ != nullptr)
-        {
-            this->index_sensor_->publish_state(
-                data.index
-            );
-        }
-
-
-        if (this->battery_sensor_ != nullptr)
-        {
-            this->battery_sensor_->publish_state(
-                data.battery
-            );
-        }
-
-
-        if (this->rssi_sensor_ != nullptr)
-        {
-            this->rssi_sensor_->publish_state(
-                data.rssi
-            );
-        }
     }
+
+  }
+
 }
 
 
