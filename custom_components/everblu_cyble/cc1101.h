@@ -56,5 +56,16 @@ void cc1101_write_fifo(uint8_t *buffer, uint8_t length);
 // Vérification présence CC1101
 uint8_t cc1101_get_version(void);
 
+#ifdef __cplusplus
+
+namespace esphome {
+namespace everblu_cyble {
+
+void cc1101_component_init();
+
+bool cc1101_component_test();
+
+}
+}
 
 #endif
