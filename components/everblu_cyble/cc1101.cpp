@@ -1,100 +1,66 @@
 #include "cc1101.h"
-#include "cc1101_driver.h"
 
 #include "esphome/core/log.h"
+
 
 namespace esphome {
     namespace everblu_cyble {
 
-        static const char *const TAG = "cc1101";
 
-        CC1101 cc1101;
+        static const char *TAG = "cc1101";
 
-        void CC1101::set_cs_pin(GPIOPin *pin) {
-            this->cs_pin_ = pin;
-        }
 
-        void CC1101::set_gdo0_pin(GPIOPin *pin) {
-            this->gdo0_pin_ = pin;
-        }
+// Etat interne du driver
 
-        void CC1101::set_gdo2_pin(GPIOPin *pin) {
-            this->gdo2_pin_ = pin;
-        }
+        static bool initialized = false;
 
-        void CC1101::setup() {
-            Component::setup();
 
-            ESP_LOGI(TAG, "Initialisation CC1101");
-
-            if (this->cs_pin_ != nullptr)
-                this->cs_pin_->setup();
-
-            if (this->gdo0_pin_ != nullptr)
-                this->gdo0_pin_->setup();
-
-            if (this->gdo2_pin_ != nullptr)
-                this->gdo2_pin_->setup();
-
-            cc1101_init();
-
-            ESP_LOGI(TAG, "CC1101 VERSION 0x%02X", cc1101_get_version());
-        }
-
-        void CC1101::receive() {
-            cc1101_rx();
-        }
-
-        uint8_t CC1101::read_fifo(uint8_t *buffer) {
-            return cc1101_read_fifo(buffer);
-        }
-
-        uint8_t CC1101::get_version() {
-            return cc1101_get_version();
-        }
 
 // --------------------------------------------------
-// Driver bas niveau CC1101 temporaire
+// Initialisation
 // --------------------------------------------------
-
-        static bool cc1101_initialized = false;
-
 
         void cc1101_init()
         {
-            ESP_LOGI(TAG, "Driver CC1101 init");
+            ESP_LOGI(TAG, "Initialisation CC1101");
+
 
             cc1101_reset();
 
-            cc1101_initialized = true;
+
+            /*
+               Configuration radio à venir :
+
+               FREQ2
+               FREQ1
+               FREQ0
+
+               MDMCFG4
+               MDMCFG3
+               MDMCFG2
+
+               DEVIATN
+
+               SYNC1
+               SYNC0
+
+               PKTCTRL
+
+               AGCCTRL
+            */
+
+
+            initialized = true;
+
+
+            ESP_LOGI(TAG, "CC1101 initialise");
         }
 
 
-        void cc1101_rx()
-        {
-            if (!cc1101_initialized)
-                return;
 
-            ESP_LOGD(TAG, "CC1101 passe en RX");
-
-            cc1101_strobe(SRX);
-        }
-
-
-        uint8_t cc1101_read_fifo(uint8_t *buffer)
-        {
-            if (!cc1101_initialized)
-                return 0;
-
-            return 0;
-        }
-
-
-        uint8_t cc1101_get_version()
-        {
-            return cc1101_read_reg(VERSION);
-        }
-
+// --------------------------------------------------
+// Reset
+// --------------------------------------------------
 
         void cc1101_reset()
         {
@@ -104,53 +70,178 @@ namespace esphome {
         }
 
 
-        void cc1101_strobe(uint8_t command)
+
+// --------------------------------------------------
+// Registres SPI
+// --------------------------------------------------
+
+        void cc1101_write_reg(
+                uint8_t addr,
+                uint8_t value
+        )
         {
-            // SPI réel à venir
+            /*
+               TODO:
+               SPI natif ESP32 vers CC1101
+            */
         }
 
 
-        uint8_t cc1101_read_reg(uint8_t addr)
+
+        uint8_t cc1101_read_reg(
+                uint8_t addr
+        )
         {
+            /*
+               TODO:
+               SPI natif ESP32 vers CC1101
+            */
+
             return 0;
         }
 
 
-        void cc1101_write_reg(uint8_t addr, uint8_t value)
+
+// --------------------------------------------------
+// Burst SPI
+// --------------------------------------------------
+
+        void cc1101_write_burst(
+                uint8_t addr,
+                uint8_t *buffer,
+                uint8_t length
+        )
         {
+            /*
+               TODO:
+               Ecriture FIFO / burst
+            */
         }
+
 
 
         void cc1101_read_burst(
                 uint8_t addr,
                 uint8_t *buffer,
-                uint8_t length)
+                uint8_t length
+        )
         {
+            /*
+               TODO:
+               Lecture FIFO / burst
+            */
         }
 
 
-        void cc1101_write_burst(
-                uint8_t addr,
-                uint8_t *buffer,
-                uint8_t length)
+
+// --------------------------------------------------
+// Commandes CC1101
+// --------------------------------------------------
+
+        void cc1101_strobe(
+                uint8_t command
+        )
         {
+            /*
+               TODO:
+               SPI STROBE
+
+               SRES
+               SRX
+               STX
+               SIDLE
+               SFRX
+               SFTX
+            */
         }
+
+
+
+// --------------------------------------------------
+// Modes radio
+// --------------------------------------------------
+
+        void cc1101_rx()
+        {
+            if (!initialized)
+                return;
+
+
+            ESP_LOGD(TAG, "CC1101 passe en RX");
+
+
+            cc1101_strobe(SRX);
+        }
+
 
 
         void cc1101_tx()
         {
-            if (!cc1101_initialized)
+            if (!initialized)
                 return;
+
+
+            ESP_LOGD(TAG, "CC1101 passe en TX");
+
 
             cc1101_strobe(STX);
         }
 
 
-        void cc1101_write_fifo(
-                uint8_t *buffer,
-                uint8_t length)
+
+// --------------------------------------------------
+// FIFO
+// --------------------------------------------------
+
+        uint8_t cc1101_read_fifo(
+                uint8_t *buffer
+        )
         {
+            if (!initialized)
+                return 0;
+
+
+            /*
+               TODO:
+               Lecture FIFO RX
+            */
+
+
+            return 0;
         }
 
-    }  // namespace everblu_cyble
-}  // namespace esphome
+
+
+        void cc1101_write_fifo(
+                uint8_t *buffer,
+                uint8_t length
+        )
+        {
+            if (!initialized)
+                return;
+
+
+            /*
+               TODO:
+               Ecriture FIFO TX
+            */
+        }
+
+
+
+// --------------------------------------------------
+// Identification
+// --------------------------------------------------
+
+        uint8_t cc1101_get_version()
+        {
+            ESP_LOGI(TAG, "Lecture version CC1101");
+
+
+            return cc1101_read_reg(VERSION);
+        }
+
+
+
+    } // namespace everblu_cyble
+} // namespace esphome
