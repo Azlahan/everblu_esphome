@@ -2,14 +2,10 @@ import esphome.codegen as cg
 import esphome.config_validation as cv
 
 from esphome.components import sensor
-
 from esphome.const import (
     CONF_ID,
-    DEVICE_CLASS_BATTERY,
-    DEVICE_CLASS_SIGNAL_STRENGTH,
+    DEVICE_CLASS_WATER,
     STATE_CLASS_TOTAL_INCREASING,
-    UNIT_PERCENT,
-    UNIT_DB,
 )
 
 from esphome import pins
@@ -18,45 +14,42 @@ from esphome import pins
 # Namespace C++
 everblu_cyble_ns = cg.esphome_ns.namespace("everblu_cyble")
 
-
 EverbluCyble = everblu_cyble_ns.class_(
     "EverbluCyble",
     cg.Component,
+    sensor.Sensor,
 )
 
 
+CONF_METER_ID = "meter_id"
 CONF_CS_PIN = "cs_pin"
-CONF_INDEX = "index"
-CONF_BATTERY = "battery"
-CONF_RSSI = "rssi"
+CONF_GDO0_PIN = "gdo0_pin"
+CONF_GDO2_PIN = "gdo2_pin"
 
 
-
-CONFIG_SCHEMA = cv.Schema(
+CONFIG_SCHEMA = sensor.sensor_schema(
+    EverbluCyble,
+    unit_of_measurement="m³",
+    accuracy_decimals=3,
+    device_class=DEVICE_CLASS_WATER,
+    state_class=STATE_CLASS_TOTAL_INCREASING,
+).extend(
     {
-        cv.GenerateID(): cv.declare_id(EverbluCyble),
+        cv.Required(CONF_METER_ID): cv.string,
 
-        cv.Required(CONF_CS_PIN): pins.gpio_output_pin_schema,
+        cv.Required(CONF_CS_PIN):
+            pins.gpio_output_pin_schema,
 
+        cv.Optional(CONF_GDO0_PIN):
+            pins.internal_gpio_input_pin_schema,
 
-        cv.Optional(CONF_INDEX): sensor.sensor_schema(
-            unit_of_measurement="m³",
-            state_class=STATE_CLASS_TOTAL_INCREASING,
-        ),
+        cv.Optional(CONF_GDO2_PIN):
+            pins.internal_gpio_input_pin_schema,
 
-
-        cv.Optional(CONF_BATTERY): sensor.sensor_schema(
-            unit_of_measurement=UNIT_PERCENT,
-            device_class=DEVICE_CLASS_BATTERY,
-        ),
-
-
-        cv.Optional(CONF_RSSI): sensor.sensor_schema(
-            unit_of_measurement=UNIT_DB,
-            device_class=DEVICE_CLASS_SIGNAL_STRENGTH,
-        ),
     }
-).extend(cv.COMPONENT_SCHEMA)
+).extend(
+    cv.COMPONENT_SCHEMA
+)
 
 
 
@@ -66,15 +59,26 @@ async def to_code(config):
         config[CONF_ID]
     )
 
-
     await cg.register_component(
         var,
         config
     )
 
+    await sensor.register_sensor(
+        var,
+        config
+    )
 
-    # GPIO CS CC1101
 
+    # Identifiant compteur
+    cg.add(
+        var.set_meter_id(
+            config[CONF_METER_ID]
+        )
+    )
+
+
+    # CS CC1101
     cs_pin = await cg.gpio_pin_expression(
         config[CONF_CS_PIN]
     )
@@ -84,43 +88,27 @@ async def to_code(config):
     )
 
 
+    # GDO0 CC1101
 
-    # Index compteur
+    if CONF_GDO0_PIN in config:
 
-    if CONF_INDEX in config:
-
-        sens = await sensor.new_sensor(
-            config[CONF_INDEX]
+        gdo0 = await cg.gpio_pin_expression(
+            config[CONF_GDO0_PIN]
         )
 
         cg.add(
-            var.set_index_sensor(sens)
+            var.set_gdo0_pin(gdo0)
         )
 
 
+    # GDO2 CC1101
 
-    # Batterie
+    if CONF_GDO2_PIN in config:
 
-    if CONF_BATTERY in config:
-
-        sens = await sensor.new_sensor(
-            config[CONF_BATTERY]
-        )
-
-        cg.add(
-            var.set_battery_sensor(sens)
-        )
-
-
-
-    # RSSI
-
-    if CONF_RSSI in config:
-
-        sens = await sensor.new_sensor(
-            config[CONF_RSSI]
+        gdo2 = await cg.gpio_pin_expression(
+            config[CONF_GDO2_PIN]
         )
 
         cg.add(
-            var.set_rssi_sensor(sens)
+            var.set_gdo2_pin(gdo2)
         )
