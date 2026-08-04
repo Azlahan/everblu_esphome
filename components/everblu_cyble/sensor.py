@@ -1,6 +1,8 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 
+from esphome.components import sensor
+
 from esphome.const import (
     CONF_ID,
     DEVICE_CLASS_WATER,
@@ -10,8 +12,11 @@ from esphome.const import (
 from esphome import pins
 
 
+
 # Namespace C++
-everblu_cyble_ns = cg.esphome_ns.namespace("everblu_cyble")
+everblu_cyble_ns = cg.esphome_ns.namespace(
+    "everblu_cyble"
+)
 
 
 EverbluCyble = everblu_cyble_ns.class_(
@@ -22,6 +27,8 @@ EverbluCyble = everblu_cyble_ns.class_(
 
 
 
+# Configuration YAML
+
 CONF_METER_ID = "meter_id"
 CONF_CS_PIN = "cs_pin"
 CONF_GDO0_PIN = "gdo0_pin"
@@ -31,32 +38,38 @@ CONF_GDO2_PIN = "gdo2_pin"
 
 CONFIG_SCHEMA = sensor.sensor_schema(
     EverbluCyble,
+
     unit_of_measurement="m³",
+
     accuracy_decimals=3,
+
     device_class=DEVICE_CLASS_WATER,
+
     state_class=STATE_CLASS_TOTAL_INCREASING,
-).extend(
-    {
 
-        # Identifiant numérique du compteur
-        cv.Required(CONF_METER_ID): cv.uint32_t,
+).extend({
 
-
-        # CSN CC1101
-        cv.Required(CONF_CS_PIN):
-            pins.gpio_output_pin_schema,
+    # Identifiant compteur EverBlu
+    cv.Required(CONF_METER_ID):
+        cv.uint32_t,
 
 
-        # Interruptions CC1101
-        cv.Optional(CONF_GDO0_PIN):
-            pins.internal_gpio_input_pin_schema,
+    # CSN CC1101
+    cv.Required(CONF_CS_PIN):
+        pins.gpio_output_pin_schema,
 
 
-        cv.Optional(CONF_GDO2_PIN):
-            pins.internal_gpio_input_pin_schema,
+    # GDO0 CC1101
+    cv.Optional(CONF_GDO0_PIN):
+        pins.internal_gpio_input_pin_schema,
 
-    }
-).extend(
+
+    # GDO2 CC1101
+    cv.Optional(CONF_GDO2_PIN):
+        pins.internal_gpio_input_pin_schema,
+
+
+}).extend(
     cv.COMPONENT_SCHEMA
 )
 
@@ -64,6 +77,7 @@ CONFIG_SCHEMA = sensor.sensor_schema(
 
 
 async def to_code(config):
+
 
     var = cg.new_Pvariable(
         config[CONF_ID]
@@ -99,8 +113,11 @@ async def to_code(config):
         config[CONF_CS_PIN]
     )
 
+
     cg.add(
-        var.set_cs_pin(cs_pin)
+        var.set_cs_pin(
+            cs_pin
+        )
     )
 
 
@@ -109,12 +126,15 @@ async def to_code(config):
 
     if CONF_GDO0_PIN in config:
 
-        gdo0 = await cg.gpio_pin_expression(
+        gdo0_pin = await cg.gpio_pin_expression(
             config[CONF_GDO0_PIN]
         )
 
+
         cg.add(
-            var.set_gdo0_pin(gdo0)
+            var.set_gdo0_pin(
+                gdo0_pin
+            )
         )
 
 
@@ -123,10 +143,13 @@ async def to_code(config):
 
     if CONF_GDO2_PIN in config:
 
-        gdo2 = await cg.gpio_pin_expression(
+        gdo2_pin = await cg.gpio_pin_expression(
             config[CONF_GDO2_PIN]
         )
 
+
         cg.add(
-            var.set_gdo2_pin(gdo2)
+            var.set_gdo2_pin(
+                gdo2_pin
+            )
         )
