@@ -65,7 +65,7 @@
 #define TEST0       0x2E
 
 
-// Status Registers
+// CC1101 Status Registers
 
 #define PARTNUM     0x30
 #define VERSION     0x31
@@ -83,7 +83,7 @@
 #define RCCTRL0_STATUS 0x3D
 
 
-// Command Strobes
+// CC1101 Command Strobes
 
 #define SRES        0x30
 #define SFSTXON     0x31
@@ -101,7 +101,7 @@
 #define SNOP        0x3D
 
 
-// SPI access flags
+// SPI flags
 
 #define WRITE_BURST 0x40
 #define READ_SINGLE 0x80
