@@ -17,13 +17,14 @@ static const char *TAG = "everblu_protocol";
 
 void protocol_init()
 {
-    ESP_LOGI(TAG, "Initialisation protocole EverBlu");
+    ESP_LOGI(TAG,
+             "Initialisation protocole EverBlu");
 }
 
 
 
 // --------------------------------------------------
-// Vérification d'une trame EverBlu
+// Vérification trame
 // --------------------------------------------------
 
 bool protocol_check_frame(
@@ -35,25 +36,20 @@ bool protocol_check_frame(
         return false;
 
 
+    /*
+       Taille minimale provisoire.
+
+       À remplacer par la vraie structure
+       du paquet EverBlu Cyble.
+    */
+
     if (length < 8)
         return false;
 
 
-    /*
-       TODO :
-
-       Ajouter ici :
-       - recherche préambule
-       - synchro CC1101
-       - longueur paquet
-       - CRC
-       - identification Cyble
-
-    */
-
-
     return true;
 }
+
 
 
 
@@ -77,34 +73,43 @@ bool protocol_decode(
 
 
     /*
-        Décodage temporaire
+       PLACEHOLDER
 
-        Sera remplacé par :
+       Ici viendra :
 
-        - extraction ID compteur
-        - extraction index eau
-        - état batterie
-        - qualité radio
+       - lecture identifiant compteur
+       - lecture index eau
+       - lecture batterie
+       - calcul RSSI
 
     */
+
 
 
     result->valid = true;
 
 
-    // Valeurs temporaires
+    /*
+       Valeurs de test uniquement
+       pour vérifier le chemin :
+
+       CC1101 -> protocole -> ESPHome -> HA
+
+    */
+
     result->meter_id = 0;
 
     result->index = 0;
 
-    result->battery = 0;
+    result->battery = 100;
 
-    result->rssi = 0;
+    result->rssi = -50;
 
 
 
     ESP_LOGD(TAG,
-             "Trame EverBlu reçue");
+             "Trame EverBlu décodée (test)");
+
 
 
     return true;
