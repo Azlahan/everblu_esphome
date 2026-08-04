@@ -10,42 +10,84 @@ namespace everblu_cyble {
 static const char *TAG = "cc1101";
 
 
-// Initialisation wrapper ESPHome
-void cc1101_component_init()
+CC1101 cc1101;
+
+
+
+void CC1101::set_cs_pin(GPIOPin *pin)
 {
-    ESP_LOGI(TAG, "Initialisation wrapper CC1101");
+    this->cs_pin_ = pin;
+}
+
+
+
+void CC1101::set_gdo0_pin(GPIOPin *pin)
+{
+    this->gdo0_pin_ = pin;
+}
+
+
+
+void CC1101::set_gdo2_pin(GPIOPin *pin)
+{
+    this->gdo2_pin_ = pin;
+}
+
+
+
+
+void CC1101::setup()
+{
+
+    ESP_LOGI(TAG,
+             "Initialisation CC1101");
+
+
+    if (this->cs_pin_ != nullptr)
+        this->cs_pin_->setup();
+
+
+    if (this->gdo0_pin_ != nullptr)
+        this->gdo0_pin_->setup();
+
+
+    if (this->gdo2_pin_ != nullptr)
+        this->gdo2_pin_->setup();
+
+
 
     cc1101_init();
 
 
-    uint8_t version = cc1101_get_version();
-
-
     ESP_LOGI(TAG,
-             "CC1101 VERSION = 0x%02X",
-             version);
+             "CC1101 VERSION 0x%02X",
+             cc1101_get_version());
+
 }
 
 
-// Test lecture radio
-bool cc1101_component_test()
+
+void CC1101::receive()
 {
-    uint8_t version = cc1101_get_version();
-
-    if (version == 0x00 || version == 0xFF)
-    {
-        ESP_LOGE(TAG,
-                 "CC1101 non détecté");
-        return false;
-    }
-
-
-    ESP_LOGI(TAG,
-             "CC1101 détecté");
-
-    return true;
+    cc1101_rx();
 }
 
 
-} // namespace everblu_cyble
-} // namespace esphome
+
+uint8_t CC1101::read_fifo(
+        uint8_t *buffer)
+{
+    return cc1101_read_fifo(buffer);
+}
+
+
+
+uint8_t CC1101::get_version()
+{
+    return cc1101_get_version();
+}
+
+
+
+}
+}
