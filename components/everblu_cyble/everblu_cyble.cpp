@@ -10,44 +10,36 @@ namespace esphome {
     namespace everblu_cyble {
 
 
-        static const char *const TAG = "everblu_cyble";
+        static const char *TAG = "everblu_cyble";
 
 
 
         void EverbluCyble::setup()
         {
 
-            ESP_LOGI(TAG,
-                     "Initialisation EverBlu Cyble");
+            ESP_LOGI(TAG, "Initialisation EverBlu Cyble");
 
 
             ESP_LOGI(TAG,
-                     "Compteur configuré : %u",
+                     "Compteur configuré : %lu",
                      this->meter_id_);
 
 
 
-            // Configuration du CC1101
+            // Initialisation CC1101 bas niveau
 
-            cc1101.set_cs_pin(
-                    this->cs_pin_
-            );
+            cc1101_init();
 
 
-            cc1101.set_gdo0_pin(
-                    this->gdo0_pin_
-            );
+            ESP_LOGI(TAG,
+                     "CC1101 VERSION : 0x%02X",
+                     cc1101_get_version());
 
 
-            cc1101.set_gdo2_pin(
-                    this->gdo2_pin_
-            );
 
+            // Passage en réception
 
-            cc1101.setup();
-
-
-            cc1101.receive();
+            cc1101_rx();
 
 
 
@@ -60,11 +52,11 @@ namespace esphome {
             this->initialized_ = true;
 
 
-
             ESP_LOGI(TAG,
                      "EverBlu prêt");
 
         }
+
 
 
 
@@ -81,8 +73,6 @@ namespace esphome {
 
 
 
-            // lecture toutes les secondes
-
             if (now - this->last_read_ < 1000)
                 return;
 
@@ -92,28 +82,23 @@ namespace esphome {
 
 
 
-
             uint8_t buffer[CC1101_FIFO_SIZE];
 
 
 
             uint8_t length =
-                    cc1101.read_fifo(buffer);
+                    cc1101_read_fifo(buffer);
 
 
 
             if (length == 0)
-            {
                 return;
-            }
-
 
 
 
             ESP_LOGD(TAG,
                      "Trame reçue : %u octets",
                      length);
-
 
 
 
@@ -129,7 +114,7 @@ namespace esphome {
             {
 
                 ESP_LOGD(TAG,
-                         "Trame inconnue");
+                         "Trame non reconnue");
 
                 return;
             }
@@ -143,14 +128,13 @@ namespace esphome {
 
 
 
-            // Filtrage compteur
 
             if (this->meter_id_ != 0 &&
                 data.meter_id != this->meter_id_)
             {
 
                 ESP_LOGD(TAG,
-                         "Compteur ignoré : %u",
+                         "Compteur ignoré : %lu",
                          data.meter_id);
 
                 return;
@@ -162,7 +146,6 @@ namespace esphome {
 
             float volume =
                     data.index / 1000.0f;
-
 
 
 
