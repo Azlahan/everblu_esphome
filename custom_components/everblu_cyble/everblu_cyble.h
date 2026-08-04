@@ -4,8 +4,6 @@
 #include "esphome/core/gpio.h"
 #include "esphome/components/sensor/sensor.h"
 
-#include <string>
-
 
 namespace esphome {
 namespace everblu_cyble {
@@ -15,10 +13,13 @@ class EverbluCyble : public Component, public sensor::Sensor {
 
  public:
 
+
   // Cycle ESPHome
+
   void setup() override;
 
   void loop() override;
+
 
 
   float get_setup_priority() const override {
@@ -26,39 +27,49 @@ class EverbluCyble : public Component, public sensor::Sensor {
   }
 
 
-  // Identifiant compteur
 
-  void set_meter_id(const std::string &id) {
+  // Identifiant compteur EverBlu
+
+  void set_meter_id(uint32_t id) {
     this->meter_id_ = id;
   }
 
 
-  // Broche CS CC1101
+
+  // Broche CS du CC1101
 
   void set_cs_pin(GPIOPin *pin) {
     this->cs_pin_ = pin;
   }
 
 
-  // GDO0 CC1101
+
+  // Broche GDO0 du CC1101
 
   void set_gdo0_pin(GPIOPin *pin) {
     this->gdo0_pin_ = pin;
   }
 
 
-  // GDO2 CC1101
+
+  // Broche GDO2 du CC1101
 
   void set_gdo2_pin(GPIOPin *pin) {
     this->gdo2_pin_ = pin;
   }
 
 
+
  protected:
 
 
-  std::string meter_id_;
+  // Identifiant compteur
 
+  uint32_t meter_id_{0};
+
+
+
+  // GPIO CC1101
 
   GPIOPin *cs_pin_{nullptr};
 
@@ -67,10 +78,17 @@ class EverbluCyble : public Component, public sensor::Sensor {
   GPIOPin *gdo2_pin_{nullptr};
 
 
+
+  // Etat interne
+
   bool initialized_{false};
 
 
+
+  // Timer lecture
+
   uint32_t last_read_{0};
+
 
 };
 
