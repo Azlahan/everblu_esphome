@@ -2,9 +2,9 @@ import esphome.codegen as cg
 import esphome.config_validation as cv
 
 from esphome.components import sensor
+
 from esphome.const import (
     CONF_ID,
-    DEVICE_CLASS_WATER,
     DEVICE_CLASS_BATTERY,
     DEVICE_CLASS_SIGNAL_STRENGTH,
     STATE_CLASS_TOTAL_INCREASING,
@@ -18,6 +18,7 @@ from esphome import pins
 # Namespace C++
 everblu_cyble_ns = cg.esphome_ns.namespace("everblu_cyble")
 
+
 EverbluCyble = everblu_cyble_ns.class_(
     "EverbluCyble",
     cg.Component,
@@ -30,22 +31,25 @@ CONF_BATTERY = "battery"
 CONF_RSSI = "rssi"
 
 
+
 CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(): cv.declare_id(EverbluCyble),
 
         cv.Required(CONF_CS_PIN): pins.gpio_output_pin_schema,
 
+
         cv.Optional(CONF_INDEX): sensor.sensor_schema(
             unit_of_measurement="m³",
-            device_class=DEVICE_CLASS_WATER,
             state_class=STATE_CLASS_TOTAL_INCREASING,
         ),
+
 
         cv.Optional(CONF_BATTERY): sensor.sensor_schema(
             unit_of_measurement=UNIT_PERCENT,
             device_class=DEVICE_CLASS_BATTERY,
         ),
+
 
         cv.Optional(CONF_RSSI): sensor.sensor_schema(
             unit_of_measurement=UNIT_DB,
@@ -62,13 +66,15 @@ async def to_code(config):
         config[CONF_ID]
     )
 
+
     await cg.register_component(
         var,
         config
     )
 
 
-    # Broche CS CC1101
+    # GPIO CS CC1101
+
     cs_pin = await cg.gpio_pin_expression(
         config[CONF_CS_PIN]
     )
@@ -78,7 +84,9 @@ async def to_code(config):
     )
 
 
-    # Capteur index eau
+
+    # Index compteur
+
     if CONF_INDEX in config:
 
         sens = await sensor.new_sensor(
@@ -90,7 +98,9 @@ async def to_code(config):
         )
 
 
+
     # Batterie
+
     if CONF_BATTERY in config:
 
         sens = await sensor.new_sensor(
@@ -102,7 +112,9 @@ async def to_code(config):
         )
 
 
+
     # RSSI
+
     if CONF_RSSI in config:
 
         sens = await sensor.new_sensor(
