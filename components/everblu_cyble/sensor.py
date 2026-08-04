@@ -9,9 +9,6 @@ from esphome.const import (
     STATE_CLASS_TOTAL_INCREASING,
 )
 
-from esphome import pins
-
-
 
 # Namespace C++
 everblu_cyble_ns = cg.esphome_ns.namespace(
@@ -27,12 +24,9 @@ EverbluCyble = everblu_cyble_ns.class_(
 
 
 
-# Configuration YAML
+# Configuration
 
 CONF_METER_ID = "meter_id"
-CONF_CS_PIN = "cs_pin"
-CONF_GDO0_PIN = "gdo0_pin"
-CONF_GDO2_PIN = "gdo2_pin"
 
 
 
@@ -49,25 +43,9 @@ CONFIG_SCHEMA = sensor.sensor_schema(
 
 ).extend({
 
-    # Identifiant compteur EverBlu
+    # Identifiant du compteur EverBlu
     cv.Required(CONF_METER_ID):
         cv.uint32_t,
-
-
-    # CSN CC1101
-    cv.Required(CONF_CS_PIN):
-        pins.gpio_output_pin_schema,
-
-
-    # GDO0 CC1101
-    cv.Optional(CONF_GDO0_PIN):
-        pins.internal_gpio_input_pin_schema,
-
-
-    # GDO2 CC1101
-    cv.Optional(CONF_GDO2_PIN):
-        pins.internal_gpio_input_pin_schema,
-
 
 }).extend(
     cv.COMPONENT_SCHEMA
@@ -97,59 +75,10 @@ async def to_code(config):
 
 
 
-    # Identifiant compteur
+    # Configuration compteur
 
     cg.add(
         var.set_meter_id(
             config[CONF_METER_ID]
         )
     )
-
-
-
-    # CS CC1101
-
-    cs_pin = await cg.gpio_pin_expression(
-        config[CONF_CS_PIN]
-    )
-
-
-    cg.add(
-        var.set_cs_pin(
-            cs_pin
-        )
-    )
-
-
-
-    # GDO0 CC1101
-
-    if CONF_GDO0_PIN in config:
-
-        gdo0_pin = await cg.gpio_pin_expression(
-            config[CONF_GDO0_PIN]
-        )
-
-
-        cg.add(
-            var.set_gdo0_pin(
-                gdo0_pin
-            )
-        )
-
-
-
-    # GDO2 CC1101
-
-    if CONF_GDO2_PIN in config:
-
-        gdo2_pin = await cg.gpio_pin_expression(
-            config[CONF_GDO2_PIN]
-        )
-
-
-        cg.add(
-            var.set_gdo2_pin(
-                gdo2_pin
-            )
-        )
