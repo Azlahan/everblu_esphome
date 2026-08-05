@@ -13,36 +13,24 @@ namespace esphome {
         CC1101 cc1101;
 
 
+
 // --------------------------------------------------
-// Configuration
+// Pins
 // --------------------------------------------------
 
-        void CC1101::set_spi_parent(
-                spi::SPIComponent *spi)
-        {
-            this->spi_ = spi;
-        }
-
-
-
-        void CC1101::set_cs_pin(
-                GPIOPin *pin)
+        void CC1101::set_cs_pin(GPIOPin *pin)
         {
             this->cs_pin_ = pin;
         }
 
 
-
-        void CC1101::set_gdo0_pin(
-                GPIOPin *pin)
+        void CC1101::set_gdo0_pin(GPIOPin *pin)
         {
             this->gdo0_pin_ = pin;
         }
 
 
-
-        void CC1101::set_gdo2_pin(
-                GPIOPin *pin)
+        void CC1101::set_gdo2_pin(GPIOPin *pin)
         {
             this->gdo2_pin_ = pin;
         }
@@ -81,7 +69,14 @@ namespace esphome {
             delay(10);
 
 
-            this->strobe(SRES);
+
+            this->spi_setup();
+
+
+
+            this->strobe(
+                    SRES
+            );
 
 
             delay(10);
@@ -90,7 +85,7 @@ namespace esphome {
 
             ESP_LOGI(
                     TAG,
-                    "CC1101 VERSION 0x%02X",
+                    "CC1101 version : 0x%02X",
                     this->get_version()
             );
 
@@ -99,29 +94,24 @@ namespace esphome {
 
 
 // --------------------------------------------------
-// SPI transfert
+// SPI
 // --------------------------------------------------
 
         uint8_t CC1101::transfer_byte(
                 uint8_t data)
         {
 
-            if (this->spi_ == nullptr)
-                return 0;
+            uint8_t response = 0;
 
 
-            uint8_t rx = 0;
-
-
-            this->spi_->write_read(
+            this->transfer(
                     &data,
-                    1,
-                    &rx,
+                    &response,
                     1
             );
 
 
-            return rx;
+            return response;
 
         }
 
@@ -141,9 +131,14 @@ namespace esphome {
 
 
 
-            this->transfer_byte(addr);
+            this->transfer_byte(
+                    addr
+            );
 
-            this->transfer_byte(value);
+
+            this->transfer_byte(
+                    value
+            );
 
 
 
@@ -159,7 +154,7 @@ namespace esphome {
                 uint8_t addr)
         {
 
-            uint8_t value = 0;
+            uint8_t value;
 
 
 
@@ -174,7 +169,9 @@ namespace esphome {
 
 
             value =
-                    this->transfer_byte(0);
+                    this->transfer_byte(
+                            0
+                    );
 
 
 
@@ -247,7 +244,9 @@ namespace esphome {
             for(uint8_t i = 0; i < length; i++)
             {
                 buffer[i] =
-                        this->transfer_byte(0);
+                        this->transfer_byte(
+                                0
+                        );
             }
 
 
@@ -294,7 +293,7 @@ namespace esphome {
 
             ESP_LOGD(
                     TAG,
-                    "CC1101 RX"
+                    "Passage CC1101 en RX"
             );
 
 
@@ -306,13 +305,12 @@ namespace esphome {
 
 
 
-
         void CC1101::transmit()
         {
 
             ESP_LOGD(
                     TAG,
-                    "CC1101 TX"
+                    "Passage CC1101 en TX"
             );
 
 
@@ -339,12 +337,12 @@ namespace esphome {
 
 
 
-            if(length == 0)
+            if (length == 0)
                 return 0;
 
 
 
-            if(length > CC1101_FIFO_SIZE)
+            if (length > CC1101_FIFO_SIZE)
                 length = CC1101_FIFO_SIZE;
 
 

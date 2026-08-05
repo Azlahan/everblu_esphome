@@ -4,7 +4,7 @@
 
 #include "esphome/core/component.h"
 #include "esphome/components/spi/spi.h"
-#include "esphome/core/gpio.h"
+#include "esphome/components/gpio/gpio.h"
 
 #include "registers.h"
 
@@ -16,17 +16,16 @@ namespace esphome {
 #define CC1101_FIFO_SIZE 64
 
 
-        class CC1101 : public Component {
+        class CC1101 : public Component,
+                       public spi::SPIDevice {
 
 
         public:
 
 
             // -------------------------------
-            // Configuration
+            // Pins
             // -------------------------------
-
-            void set_spi_parent(spi::SPIComponent *spi);
 
             void set_cs_pin(GPIOPin *pin);
 
@@ -53,6 +52,16 @@ namespace esphome {
             void receive();
 
             void transmit();
+
+
+
+            // -------------------------------
+            // SPI
+            // -------------------------------
+
+            uint8_t transfer_byte(
+                    uint8_t data
+            );
 
 
 
@@ -117,14 +126,15 @@ namespace esphome {
 
 
 
+            // -------------------------------
+            // Identification
+            // -------------------------------
+
             uint8_t get_version();
 
 
 
         protected:
-
-
-            spi::SPIComponent *spi_{nullptr};
 
 
             GPIOPin *cs_pin_{nullptr};
@@ -134,15 +144,12 @@ namespace esphome {
             GPIOPin *gdo2_pin_{nullptr};
 
 
-            uint8_t transfer_byte(
-                    uint8_t data
-            );
-
-
         };
 
 
+
         extern CC1101 cc1101;
+
 
 
     } // namespace everblu_cyble
