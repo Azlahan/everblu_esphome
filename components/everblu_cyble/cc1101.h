@@ -6,6 +6,7 @@
 #include "esphome/core/component.h"
 #include "esphome/core/gpio.h"
 
+
 #include "esphome/components/spi/spi.h"
 
 
@@ -34,12 +35,13 @@ namespace esphome {
         {
 
 
-
         public:
 
 
 
-            // Configuration
+            // --------------------------------------------------
+            // Configuration GPIO
+            // --------------------------------------------------
 
             void set_cs_pin(
                     GPIOPin *pin
@@ -59,7 +61,9 @@ namespace esphome {
 
 
 
+            // --------------------------------------------------
             // ESPHome
+            // --------------------------------------------------
 
             void setup() override;
 
@@ -70,7 +74,9 @@ namespace esphome {
 
 
 
+            // --------------------------------------------------
             // SPI
+            // --------------------------------------------------
 
             uint8_t transfer_byte(
                     uint8_t data
@@ -80,7 +86,9 @@ namespace esphome {
 
 
 
+            // --------------------------------------------------
             // CC1101
+            // --------------------------------------------------
 
             void reset();
 
@@ -145,9 +153,14 @@ namespace esphome {
 
 
 
+
         protected:
 
 
+
+            // --------------------------------------------------
+            // GPIO
+            // --------------------------------------------------
 
             GPIOPin *cs_pin_{nullptr};
 
