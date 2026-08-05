@@ -1,6 +1,7 @@
 #include "cc1101.h"
 
 #include "esphome/core/log.h"
+#include "esphome/core/delay.h"
 
 
 namespace esphome {
@@ -15,8 +16,14 @@ namespace esphome {
 
 
 // --------------------------------------------------
-// Configuration pins
+// Configuration
 // --------------------------------------------------
+
+        void CC1101::set_spi(spi::SPIComponent *spi)
+        {
+            this->spi_ = spi;
+        }
+
 
         void CC1101::set_cs_pin(GPIOPin *pin)
         {
@@ -38,7 +45,7 @@ namespace esphome {
 
 
 // --------------------------------------------------
-// ESPHome setup
+// ESPHome
 // --------------------------------------------------
 
         void CC1101::setup()
@@ -50,7 +57,6 @@ namespace esphome {
             if (this->cs_pin_ != nullptr)
             {
                 this->cs_pin_->setup();
-
                 this->cs_pin_->digital_write(true);
             }
 
@@ -64,17 +70,12 @@ namespace esphome {
 
 
 
-            SPI.begin();
-
-
-            delay(10);
-
-
             this->reset();
 
 
+
             ESP_LOGI(TAG,
-                     "CC1101 VERSION : 0x%02X",
+                     "Version CC1101 : 0x%02X",
                      this->get_version());
 
         }
@@ -89,18 +90,33 @@ namespace esphome {
 
 
 // --------------------------------------------------
-// SPI bas niveau
+// SPI
 // --------------------------------------------------
 
-        uint8_t CC1101::transfer(uint8_t data)
+        uint8_t CC1101::transfer_byte(uint8_t data)
         {
-            return SPI.transfer(data);
+
+            uint8_t response = 0;
+
+
+            if (this->spi_ == nullptr)
+                return 0;
+
+
+            this->spi_->transfer_byte(
+                    data,
+                    &response
+            );
+
+
+            return response;
+
         }
 
 
 
 // --------------------------------------------------
-// Reset CC1101
+// Reset
 // --------------------------------------------------
 
         void CC1101::reset()
@@ -113,16 +129,18 @@ namespace esphome {
                 return;
 
 
+
             this->cs_pin_->digital_write(true);
 
             delay(1);
+
 
             this->cs_pin_->digital_write(false);
 
             delay(1);
 
 
-            SPI.transfer(SRES);
+            this->transfer_byte(CC1101_SRES);
 
 
             delay(10);
@@ -130,12 +148,13 @@ namespace esphome {
 
             this->cs_pin_->digital_write(true);
 
+
         }
 
 
 
 // --------------------------------------------------
-// Commandes STROBE
+// STROBE
 // --------------------------------------------------
 
         void CC1101::strobe(uint8_t command)
@@ -148,7 +167,7 @@ namespace esphome {
             this->cs_pin_->digital_write(false);
 
 
-            SPI.transfer(command);
+            this->transfer_byte(command);
 
 
             this->cs_pin_->digital_write(true);
@@ -167,12 +186,16 @@ namespace esphome {
         )
         {
 
+            if (this->cs_pin_ == nullptr)
+                return;
+
+
             this->cs_pin_->digital_write(false);
 
 
-            SPI.transfer(addr);
+            this->transfer_byte(addr);
 
-            SPI.transfer(value);
+            this->transfer_byte(value);
 
 
             this->cs_pin_->digital_write(true);
@@ -181,21 +204,25 @@ namespace esphome {
 
 
 
-        uint8_t CC1101::read_reg(
-                uint8_t addr
-        )
+        uint8_t CC1101::read_reg(uint8_t addr)
         {
 
-            uint8_t value;
+            if (this->cs_pin_ == nullptr)
+                return 0;
+
+
+            uint8_t value = 0;
 
 
             this->cs_pin_->digital_write(false);
 
 
-            SPI.transfer(addr | READ_SINGLE);
+            this->transfer_byte(
+                    addr | READ_SINGLE
+            );
 
 
-            value = SPI.transfer(0);
+            value = this->transfer_byte(0);
 
 
             this->cs_pin_->digital_write(true);
@@ -218,15 +245,21 @@ namespace esphome {
         )
         {
 
+            if (this->cs_pin_ == nullptr)
+                return;
+
+
             this->cs_pin_->digital_write(false);
 
 
-            SPI.transfer(addr | WRITE_BURST);
+            this->transfer_byte(
+                    addr | WRITE_BURST
+            );
 
 
             for (uint8_t i = 0; i < length; i++)
             {
-                SPI.transfer(buffer[i]);
+                this->transfer_byte(buffer[i]);
             }
 
 
@@ -243,15 +276,21 @@ namespace esphome {
         )
         {
 
+            if (this->cs_pin_ == nullptr)
+                return;
+
+
             this->cs_pin_->digital_write(false);
 
 
-            SPI.transfer(addr | READ_BURST);
+            this->transfer_byte(
+                    addr | READ_BURST
+            );
 
 
             for (uint8_t i = 0; i < length; i++)
             {
-                buffer[i] = SPI.transfer(0);
+                buffer[i] = this->transfer_byte(0);
             }
 
 
@@ -265,9 +304,7 @@ namespace esphome {
 // FIFO
 // --------------------------------------------------
 
-        uint8_t CC1101::read_fifo(
-                uint8_t *buffer
-        )
+        uint8_t CC1101::read_fifo(uint8_t *buffer)
         {
 
             uint8_t count;
@@ -286,7 +323,7 @@ namespace esphome {
 
 
             this->read_burst(
-                    0x3F,
+                    RXFIFO,
                     buffer,
                     count
             );
@@ -309,7 +346,7 @@ namespace esphome {
 
 
             this->write_burst(
-                    0x3F,
+                    TXFIFO,
                     buffer,
                     length
             );
@@ -319,17 +356,18 @@ namespace esphome {
 
 
 // --------------------------------------------------
-// Modes radio
+// Radio
 // --------------------------------------------------
 
         void CC1101::rx()
         {
 
-            ESP_LOGI(TAG,
-                     "Mode RX");
+            ESP_LOGI(TAG, "Mode RX");
 
 
-            this->strobe(SRX);
+            this->strobe(
+                    CC1101_SRX
+            );
 
         }
 
@@ -338,11 +376,12 @@ namespace esphome {
         void CC1101::tx()
         {
 
-            ESP_LOGI(TAG,
-                     "Mode TX");
+            ESP_LOGI(TAG, "Mode TX");
 
 
-            this->strobe(STX);
+            this->strobe(
+                    CC1101_STX
+            );
 
         }
 
@@ -355,7 +394,9 @@ namespace esphome {
         uint8_t CC1101::get_version()
         {
 
-            return this->read_reg(VERSION);
+            return this->read_reg(
+                    VERSION
+            );
 
         }
 

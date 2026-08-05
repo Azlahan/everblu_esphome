@@ -91,8 +91,6 @@
 // FIFO
 // ==================================================
 
-// FIFO TX et RX partagent la même adresse SPI
-
 #define TXFIFO      0x3F
 #define RXFIFO      0x3F
 #define FIFO        0x3F
@@ -133,34 +131,34 @@
 
 
 // ==================================================
-// Command Strobes
+// Command Strobes CC1101
 // ==================================================
 
-#define SRES        0x30
-#define SFSTXON     0x31
-#define SXOFF       0x32
+#define CC1101_SRES        0x30
+#define CC1101_SFSTXON     0x31
+#define CC1101_SXOFF       0x32
 
-#define SCAL        0x33
+#define CC1101_SCAL        0x33
 
-#define SRX         0x34
+#define CC1101_SRX         0x34
 
-#define STX         0x35
+#define CC1101_STX         0x35
 
-#define SIDLE       0x36
+#define CC1101_SIDLE       0x36
 
-#define SAFC        0x37
+#define CC1101_SAFC        0x37
 
-#define SWOR        0x38
+#define CC1101_SWOR        0x38
 
-#define SPWD        0x39
+#define CC1101_SPWD        0x39
 
-#define SFRX        0x3A
+#define CC1101_SFRX        0x3A
 
-#define SFTX        0x3B
+#define CC1101_SFTX        0x3B
 
-#define SWORRST     0x3C
+#define CC1101_SWORRST     0x3C
 
-#define SNOP        0x3D
+#define CC1101_SNOP        0x3D
 
 
 
@@ -168,8 +166,8 @@
 // SPI flags
 // ==================================================
 
-#define WRITE_BURST 0x40
+#define WRITE_BURST        0x40
 
-#define READ_SINGLE 0x80
+#define READ_SINGLE        0x80
 
-#define READ_BURST  0xC0
+#define READ_BURST         0xC0

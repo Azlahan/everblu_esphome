@@ -1,6 +1,5 @@
 #include "everblu_cyble.h"
 
-#include "cc1101.h"
 #include "protocol.h"
 
 #include "esphome/core/log.h"
@@ -13,65 +12,56 @@ namespace esphome {
         static const char *TAG = "everblu_cyble";
 
 
+        void EverbluCyble::set_meter_id(uint32_t id)
+        {
+            this->meter_id_ = id;
+        }
+
+
+
+        void EverbluCyble::set_cc1101(CC1101 *radio)
+        {
+            this->cc1101_ = radio;
+        }
+
+
 
         void EverbluCyble::setup()
         {
 
-            ESP_LOGI(
-                    TAG,
-                    "Initialisation EverBlu Cyble"
-            );
+            ESP_LOGI(TAG, "Initialisation EverBlu");
 
-
-            ESP_LOGI(
-                    TAG,
-                    "Compteur configuré : %lu",
-                    this->meter_id_
-            );
+            ESP_LOGI(TAG,
+                     "Compteur : %lu",
+                     this->meter_id_);
 
 
 
-            // ------------------------------------
-            // Initialisation CC1101
-            // ------------------------------------
+            if (this->cc1101_ != nullptr)
+            {
 
-            cc1101.setup();
-
-
-
-            ESP_LOGI(
-                    TAG,
-                    "CC1101 VERSION : 0x%02X",
-                    cc1101.get_version()
-            );
+                ESP_LOGI(TAG,
+                         "CC1101 version : 0x%02X",
+                         this->cc1101_->get_version());
 
 
+                this->cc1101_->rx();
 
-            // Passage en réception
+            }
+            else
+            {
+                ESP_LOGW(TAG,
+                         "CC1101 non connecté");
+            }
 
-            cc1101.receive();
 
-
-
-            // ------------------------------------
-            // Initialisation protocole EverBlu
-            // ------------------------------------
 
             protocol_init();
 
 
-
             this->initialized_ = true;
 
-
-
-            ESP_LOGI(
-                    TAG,
-                    "EverBlu prêt"
-            );
-
         }
-
 
 
 
@@ -82,14 +72,16 @@ namespace esphome {
                 return;
 
 
+            if (this->cc1101_ == nullptr)
+                return;
+
+
 
             uint32_t now = millis();
 
 
-
             if (now - this->last_read_ < 1000)
                 return;
-
 
 
             this->last_read_ = now;
@@ -99,11 +91,8 @@ namespace esphome {
             uint8_t buffer[CC1101_FIFO_SIZE];
 
 
-
             uint8_t length =
-                    cc1101.read_fifo(
-                            buffer
-                    );
+                    this->cc1101_->read_fifo(buffer);
 
 
 
@@ -112,16 +101,13 @@ namespace esphome {
 
 
 
-            ESP_LOGD(
-                    TAG,
-                    "Trame reçue : %u octets",
-                    length
-            );
+            ESP_LOGD(TAG,
+                     "Trame reçue %u octets",
+                     length);
 
 
 
             EverbluData data;
-
 
 
             if (!protocol_decode(
@@ -129,16 +115,8 @@ namespace esphome {
                     length,
                     &data))
             {
-
-                ESP_LOGD(
-                        TAG,
-                        "Trame non reconnue"
-                );
-
-
                 return;
             }
-
 
 
 
@@ -147,22 +125,11 @@ namespace esphome {
 
 
 
-
-
             if (this->meter_id_ != 0 &&
                 data.meter_id != this->meter_id_)
             {
-
-                ESP_LOGD(
-                        TAG,
-                        "Compteur ignoré : %lu",
-                        data.meter_id
-                );
-
-
                 return;
             }
-
 
 
 
@@ -171,21 +138,15 @@ namespace esphome {
 
 
 
-
-            ESP_LOGI(
-                    TAG,
-                    "Index eau : %.3f m3",
-                    volume
-            );
+            ESP_LOGI(TAG,
+                     "Index : %.3f m3",
+                     volume);
 
 
 
-            this->publish_state(
-                    volume
-            );
+            this->publish_state(volume);
 
         }
-
 
 
     } // namespace everblu_cyble

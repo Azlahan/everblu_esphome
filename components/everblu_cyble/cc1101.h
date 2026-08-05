@@ -5,7 +5,7 @@
 #include "esphome/core/component.h"
 #include "esphome/core/gpio.h"
 
-#include <SPI.h>
+#include "esphome/components/spi/spi.h"
 
 #include "registers.h"
 
@@ -19,13 +19,10 @@ namespace esphome {
 
         class CC1101 : public Component {
 
-
         public:
 
-
-            // --------------------------------------------------
-            // Configuration pins
-            // --------------------------------------------------
+            // Configuration
+            void set_spi(spi::SPIComponent *spi);
 
             void set_cs_pin(GPIOPin *pin);
 
@@ -35,41 +32,27 @@ namespace esphome {
 
 
 
-            // --------------------------------------------------
             // ESPHome
-            // --------------------------------------------------
-
             void setup() override;
 
             void loop() override;
 
 
 
-            // --------------------------------------------------
             // SPI
-            // --------------------------------------------------
-
-            uint8_t transfer(
+            uint8_t transfer_byte(
                     uint8_t data
             );
 
 
 
-            // --------------------------------------------------
-            // CC1101 commandes
-            // --------------------------------------------------
-
+            // CC1101
             void reset();
 
             void strobe(
                     uint8_t command
             );
 
-
-
-            // --------------------------------------------------
-            // Registres
-            // --------------------------------------------------
 
             void write_reg(
                     uint8_t addr,
@@ -81,11 +64,6 @@ namespace esphome {
                     uint8_t addr
             );
 
-
-
-            // --------------------------------------------------
-            // Burst
-            // --------------------------------------------------
 
             void write_burst(
                     uint8_t addr,
@@ -101,11 +79,6 @@ namespace esphome {
             );
 
 
-
-            // --------------------------------------------------
-            // FIFO
-            // --------------------------------------------------
-
             uint8_t read_fifo(
                     uint8_t *buffer
             );
@@ -117,20 +90,10 @@ namespace esphome {
             );
 
 
-
-            // --------------------------------------------------
-            // Radio
-            // --------------------------------------------------
-
             void rx();
 
             void tx();
 
-
-
-            // --------------------------------------------------
-            // Diagnostic
-            // --------------------------------------------------
 
             uint8_t get_version();
 
@@ -138,6 +101,7 @@ namespace esphome {
 
         protected:
 
+            spi::SPIComponent *spi_{nullptr};
 
             GPIOPin *cs_pin_{nullptr};
 
@@ -145,13 +109,10 @@ namespace esphome {
 
             GPIOPin *gdo2_pin_{nullptr};
 
-
         };
 
 
-
         extern CC1101 cc1101;
-
 
 
     } // namespace everblu_cyble
