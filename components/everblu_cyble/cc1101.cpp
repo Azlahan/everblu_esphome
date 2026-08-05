@@ -1,7 +1,8 @@
 #include "cc1101.h"
 
 #include "esphome/core/log.h"
-#include "esphome/core/delay.h"
+
+#include <Arduino.h>
 
 
 
