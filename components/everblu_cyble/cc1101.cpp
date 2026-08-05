@@ -10,9 +10,31 @@ namespace esphome {
         static const char *TAG = "cc1101";
 
 
-// Etat interne du driver
+// Instance globale
+        CC1101 cc1101;
 
-        static bool initialized = false;
+
+
+// --------------------------------------------------
+// Configuration pins
+// --------------------------------------------------
+
+        void CC1101::set_cs_pin(GPIOPin *pin)
+        {
+            this->cs_pin_ = pin;
+        }
+
+
+        void CC1101::set_gdo0_pin(GPIOPin *pin)
+        {
+            this->gdo0_pin_ = pin;
+        }
+
+
+        void CC1101::set_gdo2_pin(GPIOPin *pin)
+        {
+            this->gdo2_pin_ = pin;
+        }
 
 
 
@@ -20,116 +42,193 @@ namespace esphome {
 // Initialisation
 // --------------------------------------------------
 
-        void cc1101_init()
+        void CC1101::setup()
         {
+
             ESP_LOGI(TAG, "Initialisation CC1101");
 
 
-            cc1101_reset();
+            if (this->cs_pin_ != nullptr)
+            {
+                this->cs_pin_->setup();
+                this->cs_pin_->digital_write(true);
+            }
 
 
-            /*
-               Configuration radio à venir :
-
-               FREQ2
-               FREQ1
-               FREQ0
-
-               MDMCFG4
-               MDMCFG3
-               MDMCFG2
-
-               DEVIATN
-
-               SYNC1
-               SYNC0
-
-               PKTCTRL
-
-               AGCCTRL
-            */
+            if (this->gdo0_pin_ != nullptr)
+                this->gdo0_pin_->setup();
 
 
-            initialized = true;
+            if (this->gdo2_pin_ != nullptr)
+                this->gdo2_pin_->setup();
 
 
-            ESP_LOGI(TAG, "CC1101 initialise");
+
+            delay(10);
+
+
+            this->strobe(SRES);
+
+
+            delay(10);
+
+
+
+            uint8_t version = this->get_version();
+
+
+            ESP_LOGI(
+                    TAG,
+                    "CC1101 VERSION 0x%02X",
+                    version
+            );
+
         }
 
 
 
 // --------------------------------------------------
-// Reset
+// SPI helpers
 // --------------------------------------------------
 
-        void cc1101_reset()
+        void CC1101::enable()
         {
-            ESP_LOGI(TAG, "Reset CC1101");
+            if (this->cs_pin_ != nullptr)
+                this->cs_pin_->digital_write(false);
+        }
 
-            cc1101_strobe(SRES);
+
+
+        void CC1101::disable()
+        {
+            if (this->cs_pin_ != nullptr)
+                this->cs_pin_->digital_write(true);
+        }
+
+
+
+        uint8_t CC1101::transfer_byte(uint8_t data)
+        {
+
+            uint8_t response = 0;
+
+
+            this->write_byte(data);
+
+
+            this->read_byte(&response);
+
+
+            return response;
         }
 
 
 
 // --------------------------------------------------
-// Registres SPI
+// SPI registres
 // --------------------------------------------------
 
-        void cc1101_write_reg(
+        void CC1101::write_reg(
                 uint8_t addr,
-                uint8_t value
-        )
+                uint8_t value)
         {
-            /*
-               TODO:
-               SPI natif ESP32 vers CC1101
-            */
+
+            this->enable();
+
+
+            this->transfer_byte(addr);
+
+            this->transfer_byte(value);
+
+
+            this->disable();
+
         }
 
 
 
-        uint8_t cc1101_read_reg(
-                uint8_t addr
-        )
+        uint8_t CC1101::read_reg(
+                uint8_t addr)
         {
-            /*
-               TODO:
-               SPI natif ESP32 vers CC1101
-            */
 
-            return 0;
+            uint8_t value;
+
+
+            this->enable();
+
+
+            this->transfer_byte(
+                    addr | READ_SINGLE
+            );
+
+
+            value =
+                    this->transfer_byte(0);
+
+
+            this->disable();
+
+
+            return value;
         }
 
 
 
 // --------------------------------------------------
-// Burst SPI
+// Burst
 // --------------------------------------------------
 
-        void cc1101_write_burst(
+        void CC1101::write_burst(
                 uint8_t addr,
                 uint8_t *buffer,
-                uint8_t length
-        )
+                uint8_t length)
         {
-            /*
-               TODO:
-               Ecriture FIFO / burst
-            */
+
+            this->enable();
+
+
+            this->transfer_byte(
+                    addr | WRITE_BURST
+            );
+
+
+            for(uint8_t i=0;i<length;i++)
+            {
+                this->transfer_byte(
+                        buffer[i]
+                );
+            }
+
+
+            this->disable();
+
         }
 
 
 
-        void cc1101_read_burst(
+        void CC1101::read_burst(
                 uint8_t addr,
                 uint8_t *buffer,
-                uint8_t length
-        )
+                uint8_t length)
         {
-            /*
-               TODO:
-               Lecture FIFO / burst
-            */
+
+            this->enable();
+
+
+            this->transfer_byte(
+                    addr | READ_BURST
+            );
+
+
+            for(uint8_t i=0;i<length;i++)
+            {
+                buffer[i] =
+                        this->transfer_byte(0);
+            }
+
+
+            this->disable();
+
         }
 
 
@@ -138,53 +237,52 @@ namespace esphome {
 // Commandes CC1101
 // --------------------------------------------------
 
-        void cc1101_strobe(
-                uint8_t command
-        )
+        void CC1101::strobe(
+                uint8_t command)
         {
-            /*
-               TODO:
-               SPI STROBE
 
-               SRES
-               SRX
-               STX
-               SIDLE
-               SFRX
-               SFTX
-            */
+            this->enable();
+
+
+            this->transfer_byte(command);
+
+
+            this->disable();
+
         }
 
 
 
 // --------------------------------------------------
-// Modes radio
+// RX / TX
 // --------------------------------------------------
 
-        void cc1101_rx()
+        void CC1101::receive()
         {
-            if (!initialized)
-                return;
+
+            ESP_LOGD(
+                    TAG,
+                    "CC1101 RX"
+            );
 
 
-            ESP_LOGD(TAG, "CC1101 passe en RX");
+            this->strobe(SRX);
 
-
-            cc1101_strobe(SRX);
         }
 
 
 
-        void cc1101_tx()
+        void CC1101::transmit()
         {
-            if (!initialized)
-                return;
+
+            ESP_LOGD(
+                    TAG,
+                    "CC1101 TX"
+            );
 
 
-            ESP_LOGD(TAG, "CC1101 passe en TX");
+            this->strobe(STX);
 
-
-            cc1101_strobe(STX);
         }
 
 
@@ -193,38 +291,46 @@ namespace esphome {
 // FIFO
 // --------------------------------------------------
 
-        uint8_t cc1101_read_fifo(
-                uint8_t *buffer
-        )
+        uint8_t CC1101::read_fifo(
+                uint8_t *buffer)
         {
-            if (!initialized)
-                return 0;
+
+            uint8_t length;
 
 
-            /*
-               TODO:
-               Lecture FIFO RX
-            */
+            length =
+                    this->read_reg(RXBYTES)
+                    &
+                    0x7F;
 
 
-            return 0;
+            if(length)
+            {
+                this->read_burst(
+                        RXFIFO,
+                        buffer,
+                        length
+                );
+            }
+
+
+            return length;
+
         }
 
 
 
-        void cc1101_write_fifo(
+        void CC1101::write_fifo(
                 uint8_t *buffer,
-                uint8_t length
-        )
+                uint8_t length)
         {
-            if (!initialized)
-                return;
 
+            this->write_burst(
+                    TXFIFO,
+                    buffer,
+                    length
+            );
 
-            /*
-               TODO:
-               Ecriture FIFO TX
-            */
         }
 
 
@@ -233,12 +339,13 @@ namespace esphome {
 // Identification
 // --------------------------------------------------
 
-        uint8_t cc1101_get_version()
+        uint8_t CC1101::get_version()
         {
-            ESP_LOGI(TAG, "Lecture version CC1101");
 
+            return this->read_reg(
+                    VERSION
+            );
 
-            return cc1101_read_reg(VERSION);
         }
 
 
