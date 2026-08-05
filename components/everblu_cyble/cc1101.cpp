@@ -2,387 +2,109 @@
 
 #include "esphome/core/log.h"
 
-#include <Arduino.h>
-
-
 namespace esphome {
     namespace everblu_cyble {
 
-
-        static const char *TAG = "cc1101";
-
-
-        CC1101 cc1101;
+        static const char *TAG = "everblu_cyble.cc1101";
 
 
+        void CC1101::setup() {
+            ESP_LOGD(TAG, "Initialisation CC1101");
 
-// --------------------------------------------------
-// Configuration
-// --------------------------------------------------
-
-        void CC1101::set_cs_pin(GPIOPin *pin)
-        {
-            this->cs_pin_ = pin;
-        }
-
-
-        void CC1101::set_gdo0_pin(GPIOPin *pin)
-        {
-            this->gdo0_pin_ = pin;
-        }
-
-
-        void CC1101::set_gdo2_pin(GPIOPin *pin)
-        {
-            this->gdo2_pin_ = pin;
-        }
-
-
-
-// --------------------------------------------------
-// ESPHome
-// --------------------------------------------------
-
-        void CC1101::setup()
-        {
-
-            ESP_LOGI(TAG, "Initialisation CC1101");
-
-
-            if (this->cs_pin_ == nullptr)
-            {
-                ESP_LOGE(TAG, "CS absent");
-                return;
+            if (this->init()) {
+                ESP_LOGI(TAG, "CC1101 initialisé");
+            } else {
+                ESP_LOGE(TAG, "Echec initialisation CC1101");
             }
+        }
 
 
-            this->cs_pin_->setup();
-
-            this->cs_pin_->digital_write(true);
-
-
-
-            if (this->gdo0_pin_ != nullptr)
-                this->gdo0_pin_->setup();
+        void CC1101::loop() {
+            // Lecture radio cyclique à implémenter
+        }
 
 
-            if (this->gdo2_pin_ != nullptr)
-                this->gdo2_pin_->setup();
-
-
-
-            // Initialisation SPI ESPHome
-            this->spi_setup();
-
+        bool CC1101::init() {
+            ESP_LOGD(TAG, "Reset CC1101");
 
             this->reset();
 
+            // Configuration minimale du CC1101
+            // Les registres EverBlu seront ajoutés ensuite
+            // après intégration complète des valeurs du projet original.
 
+            this->initialized_ = true;
 
-            ESP_LOGI(TAG,
-                     "Version CC1101 : 0x%02X",
-                     this->get_version());
-
+            return true;
         }
 
 
+        void CC1101::reset() {
+            ESP_LOGD(TAG, "Commande RESET");
 
-        void CC1101::loop()
-        {
-
+            this->strobe(0x30);  // SRES : Reset CC1101
         }
 
 
+        void CC1101::write_register(uint8_t reg, uint8_t value) {
+            this->enable();
 
-// --------------------------------------------------
-// SPI
-// --------------------------------------------------
+            this->write_byte(reg);
+            this->write_byte(value);
 
-        uint8_t CC1101::transfer_byte(uint8_t data)
-        {
-
-            uint8_t response = 0;
-
-
-            this->transfer(
-                    &data,
-                    &response,
-                    1
-            );
-
-
-            return response;
-
+            this->disable();
         }
 
 
+        uint8_t CC1101::read_register(uint8_t reg) {
+            uint8_t value = 0;
 
-// --------------------------------------------------
-// Reset
-// --------------------------------------------------
+            this->enable();
 
-        void CC1101::reset()
-        {
+            this->write_byte(reg | 0x80);
+            value = this->read_byte();
 
-            ESP_LOGI(TAG, "Reset CC1101");
-
-
-            this->cs_pin_->digital_write(true);
-
-            delay(1);
-
-
-            this->cs_pin_->digital_write(false);
-
-            delay(1);
-
-
-            this->transfer_byte(CC1101_SRES);
-
-
-            delay(10);
-
-
-            this->cs_pin_->digital_write(true);
-
-
-        }
-
-
-
-// --------------------------------------------------
-// STROBE
-// --------------------------------------------------
-
-        void CC1101::strobe(uint8_t command)
-        {
-
-            this->cs_pin_->digital_write(false);
-
-
-            this->transfer_byte(command);
-
-
-            this->cs_pin_->digital_write(true);
-
-        }
-
-
-
-// --------------------------------------------------
-// Registres
-// --------------------------------------------------
-
-        void CC1101::write_reg(
-                uint8_t addr,
-                uint8_t value
-        )
-        {
-
-            this->cs_pin_->digital_write(false);
-
-
-            this->transfer_byte(addr);
-
-            this->transfer_byte(value);
-
-
-            this->cs_pin_->digital_write(true);
-
-        }
-
-
-
-        uint8_t CC1101::read_reg(uint8_t addr)
-        {
-
-            uint8_t value;
-
-
-            this->cs_pin_->digital_write(false);
-
-
-            this->transfer_byte(
-                    addr | READ_SINGLE
-            );
-
-
-            value = this->transfer_byte(0);
-
-
-
-            this->cs_pin_->digital_write(true);
-
+            this->disable();
 
             return value;
-
         }
 
 
-
-// --------------------------------------------------
-// Burst
-// --------------------------------------------------
-
-        void CC1101::write_burst(
-                uint8_t addr,
-                uint8_t *buffer,
-                uint8_t length
-        )
-        {
-
-            this->cs_pin_->digital_write(false);
+        uint8_t CC1101::read_status(uint8_t reg) {
+            return this->read_register(reg | 0xC0);
+        }
 
 
-            this->transfer_byte(
-                    addr | WRITE_BURST
-            );
+        void CC1101::strobe(uint8_t command) {
+            this->enable();
+
+            this->write_byte(command);
+
+            this->disable();
+        }
 
 
-            for(uint8_t i = 0; i < length; i++)
-            {
-                this->transfer_byte(buffer[i]);
+        void CC1101::transmit(uint8_t *data, uint8_t length) {
+            if (!this->initialized_) {
+                return;
             }
 
+            ESP_LOGD(TAG, "Transmission %d octets", length);
 
-            this->cs_pin_->digital_write(true);
-
+            // FIFO TX sera ajouté avec la gestion complète
         }
 
 
-
-
-        void CC1101::read_burst(
-                uint8_t addr,
-                uint8_t *buffer,
-                uint8_t length
-        )
-        {
-
-            this->cs_pin_->digital_write(false);
-
-
-            this->transfer_byte(
-                    addr | READ_BURST
-            );
-
-
-            for(uint8_t i = 0; i < length; i++)
-            {
-                buffer[i] = this->transfer_byte(0);
+        bool CC1101::receive(uint8_t *data, uint8_t length) {
+            if (!this->initialized_) {
+                return false;
             }
 
+            // FIFO RX sera ajouté avec la gestion complète
 
-            this->cs_pin_->digital_write(true);
-
+            return false;
         }
 
 
-
-// --------------------------------------------------
-// FIFO
-// --------------------------------------------------
-
-        uint8_t CC1101::read_fifo(uint8_t *buffer)
-        {
-
-            uint8_t count;
-
-
-            count = this->read_reg(RXBYTES);
-
-
-            if(count == 0)
-                return 0;
-
-
-            if(count > CC1101_FIFO_SIZE)
-                count = CC1101_FIFO_SIZE;
-
-
-
-            this->read_burst(
-                    RXFIFO,
-                    buffer,
-                    count
-            );
-
-
-            return count;
-
-        }
-
-
-
-
-        void CC1101::write_fifo(
-                uint8_t *buffer,
-                uint8_t length
-        )
-        {
-
-            if(length > CC1101_FIFO_SIZE)
-                length = CC1101_FIFO_SIZE;
-
-
-
-            this->write_burst(
-                    TXFIFO,
-                    buffer,
-                    length
-            );
-
-        }
-
-
-
-// --------------------------------------------------
-// Radio
-// --------------------------------------------------
-
-        void CC1101::rx()
-        {
-
-            ESP_LOGI(TAG, "Mode RX");
-
-
-            this->strobe(
-                    CC1101_SRX
-            );
-
-        }
-
-
-
-
-        void CC1101::tx()
-        {
-
-            ESP_LOGI(TAG, "Mode TX");
-
-
-            this->strobe(
-                    CC1101_STX
-            );
-
-        }
-
-
-
-// --------------------------------------------------
-// Identification
-// --------------------------------------------------
-
-        uint8_t CC1101::get_version()
-        {
-
-            return this->read_reg(
-                    VERSION
-            );
-
-        }
-
-
-
-    } // namespace everblu_cyble
-} // namespace esphome
+    }  // namespace everblu_cyble
+}  // namespace esphome

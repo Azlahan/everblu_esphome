@@ -1,185 +1,39 @@
 #pragma once
 
-#include <stdint.h>
-
-
 #include "esphome/core/component.h"
-#include "esphome/core/gpio.h"
-
-
 #include "esphome/components/spi/spi.h"
-
-
-#include "registers.h"
-
-
 
 namespace esphome {
     namespace everblu_cyble {
 
-
-
-#define CC1101_FIFO_SIZE 64
-
-
-
-
-        class CC1101 :
-                public Component,
-                public spi::SPIDevice<
-                        spi::BIT_ORDER_MSB_FIRST,
-                        spi::CLOCK_POLARITY_LOW,
-                        spi::CLOCK_PHASE_LEADING,
-                        spi::DATA_RATE_2MHZ
-                >
-        {
-
-
+        class CC1101 : public Component, public spi::SPIDevice {
         public:
-
-
-
-            // --------------------------------------------------
-            // Configuration GPIO
-            // --------------------------------------------------
-
-            void set_cs_pin(
-                    GPIOPin *pin
-            );
-
-
-            void set_gdo0_pin(
-                    GPIOPin *pin
-            );
-
-
-            void set_gdo2_pin(
-                    GPIOPin *pin
-            );
-
-
-
-
-
-            // --------------------------------------------------
-            // ESPHome
-            // --------------------------------------------------
-
             void setup() override;
-
-
             void loop() override;
 
+            // Initialisation du transceiver
+            bool init();
 
+            // Configuration des registres radio
+            void write_register(uint8_t reg, uint8_t value);
+            uint8_t read_register(uint8_t reg);
 
+            // Commandes radio
+            void strobe(uint8_t command);
 
+            // Transmission / réception
+            void transmit(uint8_t *data, uint8_t length);
+            bool receive(uint8_t *data, uint8_t length);
 
-            // --------------------------------------------------
-            // SPI
-            // --------------------------------------------------
+            // Lecture état radio
+            uint8_t read_status(uint8_t reg);
 
-            uint8_t transfer_byte(
-                    uint8_t data
-            );
-
-
-
-
-
-            // --------------------------------------------------
-            // CC1101
-            // --------------------------------------------------
-
+            // Contrôle du module
             void reset();
 
-
-            void strobe(
-                    uint8_t command
-            );
-
-
-
-            void write_reg(
-                    uint8_t addr,
-                    uint8_t value
-            );
-
-
-
-            uint8_t read_reg(
-                    uint8_t addr
-            );
-
-
-
-            void write_burst(
-                    uint8_t addr,
-                    uint8_t *buffer,
-                    uint8_t length
-            );
-
-
-
-            void read_burst(
-                    uint8_t addr,
-                    uint8_t *buffer,
-                    uint8_t length
-            );
-
-
-
-            uint8_t read_fifo(
-                    uint8_t *buffer
-            );
-
-
-
-            void write_fifo(
-                    uint8_t *buffer,
-                    uint8_t length
-            );
-
-
-
-            void rx();
-
-
-            void tx();
-
-
-
-            uint8_t get_version();
-
-
-
-
-
         protected:
-
-
-
-            // --------------------------------------------------
-            // GPIO
-            // --------------------------------------------------
-
-            GPIOPin *cs_pin_{nullptr};
-
-
-            GPIOPin *gdo0_pin_{nullptr};
-
-
-            GPIOPin *gdo2_pin_{nullptr};
-
-
-
+            bool initialized_{false};
         };
 
-
-
-
-        extern CC1101 cc1101;
-
-
-
-    } // namespace everblu_cyble
-} // namespace esphome
+    }  // namespace everblu_cyble
+}  // namespace esphome
