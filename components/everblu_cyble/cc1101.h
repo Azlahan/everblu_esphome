@@ -1,37 +1,32 @@
 #pragma once
 
+#include <stdint.h>
+
 #include "esphome/core/component.h"
 #include "esphome/components/spi/spi.h"
 
 namespace esphome {
     namespace everblu_cyble {
 
-        class CC1101 : public Component, public spi::SPIDevice {
+        class CC1101 : public Component {
         public:
             void setup() override;
             void loop() override;
 
-            // Initialisation du transceiver
+            void set_spi(spi::SPIComponent *spi);
+
             bool init();
 
-            // Configuration des registres radio
             void write_register(uint8_t reg, uint8_t value);
             uint8_t read_register(uint8_t reg);
 
-            // Commandes radio
             void strobe(uint8_t command);
 
-            // Transmission / réception
-            void transmit(uint8_t *data, uint8_t length);
-            bool receive(uint8_t *data, uint8_t length);
-
-            // Lecture état radio
-            uint8_t read_status(uint8_t reg);
-
-            // Contrôle du module
             void reset();
 
         protected:
+            spi::SPIComponent *spi_{nullptr};
+
             bool initialized_{false};
         };
 

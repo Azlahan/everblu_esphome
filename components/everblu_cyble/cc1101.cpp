@@ -5,33 +5,28 @@
 namespace esphome {
     namespace everblu_cyble {
 
-        static const char *TAG = "everblu_cyble.cc1101";
+        static const char *TAG = "cc1101";
 
 
         void CC1101::setup() {
-            ESP_LOGD(TAG, "Initialisation CC1101");
-
-            if (this->init()) {
-                ESP_LOGI(TAG, "CC1101 initialisé");
-            } else {
-                ESP_LOGE(TAG, "Echec initialisation CC1101");
-            }
+            ESP_LOGD(TAG, "CC1101 setup");
         }
 
 
         void CC1101::loop() {
-            // Lecture radio cyclique à implémenter
+        }
+
+
+        void CC1101::set_spi(spi::SPIComponent *spi) {
+            this->spi_ = spi;
         }
 
 
         bool CC1101::init() {
-            ESP_LOGD(TAG, "Reset CC1101");
+
+            ESP_LOGD(TAG, "Initialisation CC1101");
 
             this->reset();
-
-            // Configuration minimale du CC1101
-            // Les registres EverBlu seront ajoutés ensuite
-            // après intégration complète des valeurs du projet original.
 
             this->initialized_ = true;
 
@@ -40,69 +35,40 @@ namespace esphome {
 
 
         void CC1101::reset() {
-            ESP_LOGD(TAG, "Commande RESET");
 
-            this->strobe(0x30);  // SRES : Reset CC1101
+            ESP_LOGD(TAG, "Reset CC1101");
+
+            this->strobe(0x30);
         }
 
 
         void CC1101::write_register(uint8_t reg, uint8_t value) {
-            this->enable();
 
-            this->write_byte(reg);
-            this->write_byte(value);
+            if (this->spi_ == nullptr) {
+                return;
+            }
 
-            this->disable();
+            ESP_LOGD(TAG, "WRITE REG 0x%02X = 0x%02X", reg, value);
+
         }
 
 
         uint8_t CC1101::read_register(uint8_t reg) {
-            uint8_t value = 0;
 
-            this->enable();
+            if (this->spi_ == nullptr) {
+                return 0;
+            }
 
-            this->write_byte(reg | 0x80);
-            value = this->read_byte();
+            ESP_LOGD(TAG, "READ REG 0x%02X", reg);
 
-            this->disable();
-
-            return value;
-        }
-
-
-        uint8_t CC1101::read_status(uint8_t reg) {
-            return this->read_register(reg | 0xC0);
+            return 0;
         }
 
 
         void CC1101::strobe(uint8_t command) {
-            this->enable();
 
-            this->write_byte(command);
+            ESP_LOGD(TAG, "STROBE 0x%02X", command);
 
-            this->disable();
-        }
-
-
-        void CC1101::transmit(uint8_t *data, uint8_t length) {
-            if (!this->initialized_) {
-                return;
-            }
-
-            ESP_LOGD(TAG, "Transmission %d octets", length);
-
-            // FIFO TX sera ajouté avec la gestion complète
-        }
-
-
-        bool CC1101::receive(uint8_t *data, uint8_t length) {
-            if (!this->initialized_) {
-                return false;
-            }
-
-            // FIFO RX sera ajouté avec la gestion complète
-
-            return false;
         }
 
 
