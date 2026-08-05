@@ -16,17 +16,17 @@ namespace esphome {
 #define CC1101_FIFO_SIZE 64
 
 
-
-        class CC1101 : public Component,
-                       public spi::SPIDevice {
+        class CC1101 : public Component {
 
 
         public:
 
 
             // -------------------------------
-            // Configuration pins
+            // Configuration
             // -------------------------------
+
+            void set_spi_parent(spi::SPIComponent *spi);
 
             void set_cs_pin(GPIOPin *pin);
 
@@ -73,7 +73,7 @@ namespace esphome {
 
 
             // -------------------------------
-            // Burst SPI
+            // Burst
             // -------------------------------
 
             void write_burst(
@@ -108,7 +108,7 @@ namespace esphome {
 
 
             // -------------------------------
-            // Commandes CC1101
+            // Commandes
             // -------------------------------
 
             void strobe(
@@ -117,10 +117,6 @@ namespace esphome {
 
 
 
-            // -------------------------------
-            // Identification
-            // -------------------------------
-
             uint8_t get_version();
 
 
@@ -128,23 +124,8 @@ namespace esphome {
         protected:
 
 
-            // -------------------------------
-            // SPI interne
-            // -------------------------------
+            spi::SPIComponent *spi_{nullptr};
 
-            void enable();
-
-            void disable();
-
-            uint8_t transfer_byte(
-                    uint8_t data
-            );
-
-
-
-            // -------------------------------
-            // Pins CC1101
-            // -------------------------------
 
             GPIOPin *cs_pin_{nullptr};
 
@@ -153,12 +134,15 @@ namespace esphome {
             GPIOPin *gdo2_pin_{nullptr};
 
 
+            uint8_t transfer_byte(
+                    uint8_t data
+            );
+
+
         };
 
 
-
         extern CC1101 cc1101;
-
 
 
     } // namespace everblu_cyble
