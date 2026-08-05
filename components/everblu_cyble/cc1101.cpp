@@ -12,9 +12,9 @@ namespace esphome {
             ESP_LOGI(TAG, "CC1101 démarrage");
 
             if (this->init()) {
-                ESP_LOGI(TAG, "CC1101 OK");
+                ESP_LOGI(TAG, "CC1101 initialisé");
             } else {
-                ESP_LOGE(TAG, "CC1101 erreur");
+                ESP_LOGE(TAG, "Erreur initialisation CC1101");
             }
         }
 
@@ -23,38 +23,15 @@ namespace esphome {
         }
 
 
-        void CC1101::set_spi(spi::SPIComponent *spi) {
-            this->spi_ = spi;
-        }
-
-
-        void CC1101::set_cs_pin(GPIOPin *cs) {
-            this->cs_pin_ = cs;
-        }
-
-
         bool CC1101::init() {
 
-            if (this->cs_pin_ == nullptr || this->spi_ == nullptr) {
-                ESP_LOGE(TAG, "SPI ou CS manquant");
-                return false;
-            }
-
-
-            this->cs_pin_->setup();
-            this->cs_pin_->digital_write(true);
-
-
             this->reset();
-
 
             uint8_t part = this->read_status(0x30);
             uint8_t version = this->read_status(0x31);
 
-
             ESP_LOGI(TAG, "PARTNUM : 0x%02X", part);
             ESP_LOGI(TAG, "VERSION : 0x%02X", version);
-
 
             this->initialized_ = true;
 
@@ -66,17 +43,22 @@ namespace esphome {
 
             ESP_LOGD(TAG, "Reset CC1101");
 
-            this->strobe(0x30);
+            this->enable();
+
+            this->write_byte(0x30);  // SRES
+
+            this->disable();
+
         }
 
 
         void CC1101::strobe(uint8_t command) {
 
-            this->cs_pin_->digital_write(false);
+            this->enable();
 
-            this->spi_->write_byte(command);
+            this->write_byte(command);
 
-            this->cs_pin_->digital_write(true);
+            this->disable();
 
         }
 
@@ -86,15 +68,13 @@ namespace esphome {
             uint8_t value = 0;
 
 
-            this->cs_pin_->digital_write(false);
+            this->enable();
 
+            this->write_byte(reg | 0xC0);
 
-            this->spi_->write_byte(reg | 0xC0);
+            value = this->read_byte();
 
-            value = this->spi_->read_byte();
-
-
-            this->cs_pin_->digital_write(true);
+            this->disable();
 
 
             return value;
@@ -103,14 +83,13 @@ namespace esphome {
 
         void CC1101::write_register(uint8_t reg, uint8_t value) {
 
-            this->cs_pin_->digital_write(false);
+            this->enable();
 
+            this->write_byte(reg);
+            this->write_byte(value);
 
-            this->spi_->write_byte(reg);
-            this->spi_->write_byte(value);
+            this->disable();
 
-
-            this->cs_pin_->digital_write(true);
         }
 
 
