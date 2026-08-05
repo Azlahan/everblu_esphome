@@ -4,7 +4,7 @@
 
 #include "esphome/core/component.h"
 #include "esphome/components/spi/spi.h"
-#include "esphome/components/gpio/gpio.h"
+#include "esphome/core/gpio.h"
 
 #include "registers.h"
 
@@ -14,6 +14,7 @@ namespace esphome {
 
 
 #define CC1101_FIFO_SIZE 64
+
 
 
         class CC1101 : public Component,
@@ -72,7 +73,7 @@ namespace esphome {
 
 
             // -------------------------------
-            // Burst
+            // Burst SPI
             // -------------------------------
 
             void write_burst(
@@ -128,7 +129,7 @@ namespace esphome {
 
 
             // -------------------------------
-            // SPI manuel
+            // SPI interne
             // -------------------------------
 
             void enable();
@@ -142,7 +143,7 @@ namespace esphome {
 
 
             // -------------------------------
-            // Pins
+            // Pins CC1101
             // -------------------------------
 
             GPIOPin *cs_pin_{nullptr};
