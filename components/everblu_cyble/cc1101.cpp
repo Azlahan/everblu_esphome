@@ -13,6 +13,8 @@ namespace esphome {
 
             if (this->init()) {
                 ESP_LOGI(TAG, "CC1101 prêt");
+            } else {
+                ESP_LOGE(TAG, "Erreur initialisation CC1101");
             }
         }
 
@@ -61,6 +63,18 @@ namespace esphome {
 
             ESP_LOGD(TAG, "Reset CC1101");
 
+            // Pour l'instant :
+            // la séquence SPI réelle sera ajoutée
+            // après validation de la communication.
+        }
+
+
+        void CC1101::strobe(uint8_t command) {
+
+            ESP_LOGD(TAG, "STROBE 0x%02X", command);
+
+            // Commande CC1101 à implémenter
+            // lorsque l'accès SPI bas niveau sera ajouté.
         }
 
 

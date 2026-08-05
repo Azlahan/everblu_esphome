@@ -21,6 +21,8 @@ namespace esphome {
 
             void reset();
 
+            void strobe(uint8_t command);
+
         protected:
             spi::SPIComponent *spi_{nullptr};
             GPIOPin *cs_pin_{nullptr};
