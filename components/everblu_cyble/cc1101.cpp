@@ -12,9 +12,7 @@ namespace esphome {
             ESP_LOGI(TAG, "CC1101 démarrage");
 
             if (this->init()) {
-                ESP_LOGI(TAG, "CC1101 initialisé");
-            } else {
-                ESP_LOGE(TAG, "Erreur initialisation CC1101");
+                ESP_LOGI(TAG, "CC1101 prêt");
             }
         }
 
@@ -23,15 +21,35 @@ namespace esphome {
         }
 
 
+        void CC1101::set_spi(spi::SPIComponent *spi) {
+            this->spi_ = spi;
+        }
+
+
+        void CC1101::set_cs_pin(GPIOPin *pin) {
+            this->cs_pin_ = pin;
+        }
+
+
         bool CC1101::init() {
+
+            if (this->spi_ == nullptr) {
+                ESP_LOGE(TAG, "SPI non configuré");
+                return false;
+            }
+
+            if (this->cs_pin_ == nullptr) {
+                ESP_LOGE(TAG, "CS non configuré");
+                return false;
+            }
+
+
+            this->cs_pin_->setup();
+            this->cs_pin_->digital_write(true);
+
 
             this->reset();
 
-            uint8_t part = this->read_status(0x30);
-            uint8_t version = this->read_status(0x31);
-
-            ESP_LOGI(TAG, "PARTNUM : 0x%02X", part);
-            ESP_LOGI(TAG, "VERSION : 0x%02X", version);
 
             this->initialized_ = true;
 
@@ -42,53 +60,6 @@ namespace esphome {
         void CC1101::reset() {
 
             ESP_LOGD(TAG, "Reset CC1101");
-
-            this->enable();
-
-            this->write_byte(0x30);  // SRES
-
-            this->disable();
-
-        }
-
-
-        void CC1101::strobe(uint8_t command) {
-
-            this->enable();
-
-            this->write_byte(command);
-
-            this->disable();
-
-        }
-
-
-        uint8_t CC1101::read_status(uint8_t reg) {
-
-            uint8_t value = 0;
-
-
-            this->enable();
-
-            this->write_byte(reg | 0xC0);
-
-            value = this->read_byte();
-
-            this->disable();
-
-
-            return value;
-        }
-
-
-        void CC1101::write_register(uint8_t reg, uint8_t value) {
-
-            this->enable();
-
-            this->write_byte(reg);
-            this->write_byte(value);
-
-            this->disable();
 
         }
 

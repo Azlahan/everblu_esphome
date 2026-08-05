@@ -8,22 +8,23 @@
 namespace esphome {
     namespace everblu_cyble {
 
-        class CC1101 : public Component,
-                       public spi::SPIDevice {
+        class CC1101 : public Component {
+
         public:
             void setup() override;
             void loop() override;
+
+            void set_spi(spi::SPIComponent *spi);
+            void set_cs_pin(GPIOPin *pin);
 
             bool init();
 
             void reset();
 
-            void write_register(uint8_t reg, uint8_t value);
-            uint8_t read_status(uint8_t reg);
-
-            void strobe(uint8_t command);
-
         protected:
+            spi::SPIComponent *spi_{nullptr};
+            GPIOPin *cs_pin_{nullptr};
+
             bool initialized_{false};
         };
 
