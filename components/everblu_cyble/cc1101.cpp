@@ -24,16 +24,19 @@ namespace esphome {
         }
 
 
+
         void CC1101::set_cs_pin(GPIOPin *pin)
         {
             this->cs_pin_ = pin;
         }
 
 
+
         void CC1101::set_gdo0_pin(GPIOPin *pin)
         {
             this->gdo0_pin_ = pin;
         }
+
 
 
         void CC1101::set_gdo2_pin(GPIOPin *pin)
@@ -53,6 +56,14 @@ namespace esphome {
             ESP_LOGI(TAG, "Initialisation CC1101");
 
 
+            if (this->spi_ == nullptr)
+            {
+                ESP_LOGE(TAG, "SPI non configure");
+                return;
+            }
+
+
+
             if (this->cs_pin_ != nullptr)
             {
                 this->cs_pin_->setup();
@@ -60,8 +71,10 @@ namespace esphome {
             }
 
 
+
             if (this->gdo0_pin_ != nullptr)
                 this->gdo0_pin_->setup();
+
 
 
             if (this->gdo2_pin_ != nullptr)
@@ -95,14 +108,19 @@ namespace esphome {
         uint8_t CC1101::transfer_byte(uint8_t data)
         {
 
-            uint8_t response = 0;
-
-
             if (this->spi_ == nullptr)
                 return 0;
 
 
-            this->spi_->transfer_byte(
+            uint8_t response = 0;
+
+
+            /*
+               ESPHome SPI actuel utilise l'objet SPIComponent
+               via write_byte()
+            */
+
+            this->spi_->write_byte(
                     data,
                     &response
             );
@@ -134,18 +152,46 @@ namespace esphome {
             delay(1);
 
 
+
             this->cs_pin_->digital_write(false);
 
             delay(1);
 
 
+
             this->transfer_byte(CC1101_SRES);
 
 
-            delay(10);
+
+            delay(100);
+
 
 
             this->cs_pin_->digital_write(true);
+
+
+        }
+
+
+
+// --------------------------------------------------
+// Configuration EverBlu
+// --------------------------------------------------
+
+        void CC1101::configure_everblu()
+        {
+
+            ESP_LOGI(TAG,
+                     "Configuration EverBlu FSK");
+
+
+
+            /*
+               Configuration provisoire.
+
+               Les registres exacts seront ajoutés
+               depuis le projet Itron-EverBlu-Cyble.
+            */
 
 
         }
@@ -163,10 +209,13 @@ namespace esphome {
                 return;
 
 
+
             this->cs_pin_->digital_write(false);
 
 
+
             this->transfer_byte(command);
+
 
 
             this->cs_pin_->digital_write(true);
@@ -189,7 +238,9 @@ namespace esphome {
                 return;
 
 
+
             this->cs_pin_->digital_write(false);
+
 
 
             this->transfer_byte(addr);
@@ -197,9 +248,11 @@ namespace esphome {
             this->transfer_byte(value);
 
 
+
             this->cs_pin_->digital_write(true);
 
         }
+
 
 
 
@@ -210,10 +263,13 @@ namespace esphome {
                 return 0;
 
 
+
             uint8_t value = 0;
 
 
+
             this->cs_pin_->digital_write(false);
+
 
 
             this->transfer_byte(
@@ -221,10 +277,13 @@ namespace esphome {
             );
 
 
+
             value = this->transfer_byte(0);
 
 
+
             this->cs_pin_->digital_write(true);
+
 
 
             return value;
@@ -248,7 +307,9 @@ namespace esphome {
                 return;
 
 
+
             this->cs_pin_->digital_write(false);
+
 
 
             this->transfer_byte(
@@ -256,15 +317,18 @@ namespace esphome {
             );
 
 
-            for (uint8_t i = 0; i < length; i++)
+
+            for(uint8_t i = 0; i < length; i++)
             {
                 this->transfer_byte(buffer[i]);
             }
 
 
+
             this->cs_pin_->digital_write(true);
 
         }
+
 
 
 
@@ -279,7 +343,9 @@ namespace esphome {
                 return;
 
 
+
             this->cs_pin_->digital_write(false);
+
 
 
             this->transfer_byte(
@@ -287,10 +353,12 @@ namespace esphome {
             );
 
 
-            for (uint8_t i = 0; i < length; i++)
+
+            for(uint8_t i = 0; i < length; i++)
             {
                 buffer[i] = this->transfer_byte(0);
             }
+
 
 
             this->cs_pin_->digital_write(true);
@@ -309,11 +377,14 @@ namespace esphome {
             uint8_t count;
 
 
+
             count = this->read_reg(RXBYTES);
+
 
 
             if (count == 0)
                 return 0;
+
 
 
             if (count > CC1101_FIFO_SIZE)
@@ -328,9 +399,11 @@ namespace esphome {
             );
 
 
+
             return count;
 
         }
+
 
 
 
@@ -340,8 +413,9 @@ namespace esphome {
         )
         {
 
-            if (length > CC1101_FIFO_SIZE)
+            if(length > CC1101_FIFO_SIZE)
                 length = CC1101_FIFO_SIZE;
+
 
 
             this->write_burst(
@@ -361,7 +435,9 @@ namespace esphome {
         void CC1101::rx()
         {
 
-            ESP_LOGI(TAG, "Mode RX");
+            ESP_LOGI(TAG,
+                     "Mode RX");
+
 
 
             this->strobe(
@@ -375,7 +451,9 @@ namespace esphome {
         void CC1101::tx()
         {
 
-            ESP_LOGI(TAG, "Mode TX");
+            ESP_LOGI(TAG,
+                     "Mode TX");
+
 
 
             this->strobe(
