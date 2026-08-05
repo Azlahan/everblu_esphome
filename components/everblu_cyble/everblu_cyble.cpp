@@ -17,33 +17,45 @@ namespace esphome {
         void EverbluCyble::setup()
         {
 
-            ESP_LOGI(TAG, "Initialisation EverBlu Cyble");
+            ESP_LOGI(
+                    TAG,
+                    "Initialisation EverBlu Cyble"
+            );
 
 
-            ESP_LOGI(TAG,
-                     "Compteur configuré : %lu",
-                     this->meter_id_);
+            ESP_LOGI(
+                    TAG,
+                    "Compteur configuré : %lu",
+                    this->meter_id_
+            );
 
 
 
-            // Initialisation CC1101 bas niveau
+            // ------------------------------------
+            // Initialisation CC1101
+            // ------------------------------------
 
-            cc1101_init();
+            cc1101.setup();
 
 
-            ESP_LOGI(TAG,
-                     "CC1101 VERSION : 0x%02X",
-                     cc1101_get_version());
+
+            ESP_LOGI(
+                    TAG,
+                    "CC1101 VERSION : 0x%02X",
+                    cc1101.get_version()
+            );
 
 
 
             // Passage en réception
 
-            cc1101_rx();
+            cc1101.receive();
 
 
 
+            // ------------------------------------
             // Initialisation protocole EverBlu
+            // ------------------------------------
 
             protocol_init();
 
@@ -52,11 +64,13 @@ namespace esphome {
             this->initialized_ = true;
 
 
-            ESP_LOGI(TAG,
-                     "EverBlu prêt");
+
+            ESP_LOGI(
+                    TAG,
+                    "EverBlu prêt"
+            );
 
         }
-
 
 
 
@@ -87,7 +101,9 @@ namespace esphome {
 
 
             uint8_t length =
-                    cc1101_read_fifo(buffer);
+                    cc1101.read_fifo(
+                            buffer
+                    );
 
 
 
@@ -96,10 +112,11 @@ namespace esphome {
 
 
 
-            ESP_LOGD(TAG,
-                     "Trame reçue : %u octets",
-                     length);
-
+            ESP_LOGD(
+                    TAG,
+                    "Trame reçue : %u octets",
+                    length
+            );
 
 
 
@@ -113,8 +130,11 @@ namespace esphome {
                     &data))
             {
 
-                ESP_LOGD(TAG,
-                         "Trame non reconnue");
+                ESP_LOGD(
+                        TAG,
+                        "Trame non reconnue"
+                );
+
 
                 return;
             }
@@ -133,13 +153,15 @@ namespace esphome {
                 data.meter_id != this->meter_id_)
             {
 
-                ESP_LOGD(TAG,
-                         "Compteur ignoré : %lu",
-                         data.meter_id);
+                ESP_LOGD(
+                        TAG,
+                        "Compteur ignoré : %lu",
+                        data.meter_id
+                );
+
 
                 return;
             }
-
 
 
 
@@ -149,13 +171,18 @@ namespace esphome {
 
 
 
-            ESP_LOGI(TAG,
-                     "Index eau : %.3f m3",
-                     volume);
+
+            ESP_LOGI(
+                    TAG,
+                    "Index eau : %.3f m3",
+                    volume
+            );
 
 
 
-            this->publish_state(volume);
+            this->publish_state(
+                    volume
+            );
 
         }
 
