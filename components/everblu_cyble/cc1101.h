@@ -2,19 +2,24 @@
 
 #include <stdint.h>
 
+
 #include "esphome/core/component.h"
 #include "esphome/core/gpio.h"
 
 #include "esphome/components/spi/spi.h"
 
+
 #include "registers.h"
+
 
 
 namespace esphome {
     namespace everblu_cyble {
 
 
+
 #define CC1101_FIFO_SIZE 64
+
 
 
 
@@ -24,12 +29,14 @@ namespace esphome {
                         spi::BIT_ORDER_MSB_FIRST,
                         spi::CLOCK_POLARITY_LOW,
                         spi::CLOCK_PHASE_LEADING,
-                        spi::DATA_RATE_8MHZ
+                        spi::DATA_RATE_2MHZ
                 >
         {
 
 
+
         public:
+
 
 
             // Configuration
@@ -50,11 +57,16 @@ namespace esphome {
 
 
 
+
+
             // ESPHome
 
             void setup() override;
 
+
             void loop() override;
+
+
 
 
 
@@ -63,6 +75,8 @@ namespace esphome {
             uint8_t transfer_byte(
                     uint8_t data
             );
+
+
 
 
 
@@ -83,6 +97,7 @@ namespace esphome {
             );
 
 
+
             uint8_t read_reg(
                     uint8_t addr
             );
@@ -96,6 +111,7 @@ namespace esphome {
             );
 
 
+
             void read_burst(
                     uint8_t addr,
                     uint8_t *buffer,
@@ -107,6 +123,7 @@ namespace esphome {
             uint8_t read_fifo(
                     uint8_t *buffer
             );
+
 
 
             void write_fifo(
@@ -127,7 +144,9 @@ namespace esphome {
 
 
 
+
         protected:
+
 
 
             GPIOPin *cs_pin_{nullptr};
@@ -139,7 +158,9 @@ namespace esphome {
             GPIOPin *gdo2_pin_{nullptr};
 
 
+
         };
+
 
 
 

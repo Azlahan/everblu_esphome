@@ -5,31 +5,45 @@
 #include "esphome/core/log.h"
 
 
+
 namespace esphome {
     namespace everblu_cyble {
+
 
 
         static const char *TAG = "everblu_cyble";
 
 
-        void EverbluCyble::set_meter_id(uint32_t id)
+
+
+        void EverbluCyble::set_meter_id(
+                uint32_t id
+        )
         {
             this->meter_id_ = id;
         }
 
 
 
-        void EverbluCyble::set_cc1101(CC1101 *radio)
+
+
+        void EverbluCyble::set_cc1101(
+                CC1101 *radio
+        )
         {
             this->cc1101_ = radio;
         }
 
 
 
+
+
         void EverbluCyble::setup()
         {
 
-            ESP_LOGI(TAG, "Initialisation EverBlu");
+            ESP_LOGI(TAG,
+                     "Initialisation EverBlu");
+
 
             ESP_LOGI(TAG,
                      "Compteur : %lu",
@@ -37,12 +51,23 @@ namespace esphome {
 
 
 
+
             if (this->cc1101_ != nullptr)
             {
 
+
                 ESP_LOGI(TAG,
-                         "CC1101 version : 0x%02X",
+                         "Initialisation CC1101");
+
+
+                this->cc1101_->setup();
+
+
+
+                ESP_LOGI(TAG,
+                         "Version CC1101 : 0x%02X",
                          this->cc1101_->get_version());
+
 
 
                 this->cc1101_->rx();
@@ -50,18 +75,28 @@ namespace esphome {
             }
             else
             {
+
                 ESP_LOGW(TAG,
                          "CC1101 non connecté");
+
             }
+
+
 
 
 
             protocol_init();
 
 
+
             this->initialized_ = true;
 
+
         }
+
+
+
+
 
 
 
@@ -72,32 +107,43 @@ namespace esphome {
                 return;
 
 
+
             if (this->cc1101_ == nullptr)
                 return;
+
 
 
 
             uint32_t now = millis();
 
 
+
             if (now - this->last_read_ < 1000)
                 return;
+
 
 
             this->last_read_ = now;
 
 
 
+
+
             uint8_t buffer[CC1101_FIFO_SIZE];
 
 
+
             uint8_t length =
-                    this->cc1101_->read_fifo(buffer);
+                    this->cc1101_->read_fifo(
+                            buffer
+                    );
 
 
 
             if (length == 0)
                 return;
+
+
 
 
 
@@ -107,7 +153,10 @@ namespace esphome {
 
 
 
+
+
             EverbluData data;
+
 
 
             if (!protocol_decode(
@@ -120,8 +169,14 @@ namespace esphome {
 
 
 
+
+
+
             if (!data.valid)
                 return;
+
+
+
 
 
 
@@ -133,8 +188,14 @@ namespace esphome {
 
 
 
+
+
+
+
             float volume =
                     data.index / 1000.0f;
+
+
 
 
 
@@ -144,9 +205,14 @@ namespace esphome {
 
 
 
-            this->publish_state(volume);
+
+
+            this->publish_state(
+                    volume
+            );
 
         }
+
 
 
     } // namespace everblu_cyble
