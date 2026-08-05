@@ -9,7 +9,13 @@ namespace esphome {
 
 
         void CC1101::setup() {
-            ESP_LOGD(TAG, "CC1101 setup");
+            ESP_LOGI(TAG, "CC1101 démarrage");
+
+            if (this->init()) {
+                ESP_LOGI(TAG, "CC1101 OK");
+            } else {
+                ESP_LOGE(TAG, "CC1101 erreur");
+            }
         }
 
 
@@ -22,11 +28,33 @@ namespace esphome {
         }
 
 
+        void CC1101::set_cs_pin(GPIOPin *cs) {
+            this->cs_pin_ = cs;
+        }
+
+
         bool CC1101::init() {
 
-            ESP_LOGD(TAG, "Initialisation CC1101");
+            if (this->cs_pin_ == nullptr || this->spi_ == nullptr) {
+                ESP_LOGE(TAG, "SPI ou CS manquant");
+                return false;
+            }
+
+
+            this->cs_pin_->setup();
+            this->cs_pin_->digital_write(true);
+
 
             this->reset();
+
+
+            uint8_t part = this->read_status(0x30);
+            uint8_t version = this->read_status(0x31);
+
+
+            ESP_LOGI(TAG, "PARTNUM : 0x%02X", part);
+            ESP_LOGI(TAG, "VERSION : 0x%02X", version);
+
 
             this->initialized_ = true;
 
@@ -42,33 +70,47 @@ namespace esphome {
         }
 
 
-        void CC1101::write_register(uint8_t reg, uint8_t value) {
-
-            if (this->spi_ == nullptr) {
-                return;
-            }
-
-            ESP_LOGD(TAG, "WRITE REG 0x%02X = 0x%02X", reg, value);
-
-        }
-
-
-        uint8_t CC1101::read_register(uint8_t reg) {
-
-            if (this->spi_ == nullptr) {
-                return 0;
-            }
-
-            ESP_LOGD(TAG, "READ REG 0x%02X", reg);
-
-            return 0;
-        }
-
-
         void CC1101::strobe(uint8_t command) {
 
-            ESP_LOGD(TAG, "STROBE 0x%02X", command);
+            this->cs_pin_->digital_write(false);
 
+            this->spi_->write_byte(command);
+
+            this->cs_pin_->digital_write(true);
+
+        }
+
+
+        uint8_t CC1101::read_status(uint8_t reg) {
+
+            uint8_t value = 0;
+
+
+            this->cs_pin_->digital_write(false);
+
+
+            this->spi_->write_byte(reg | 0xC0);
+
+            value = this->spi_->read_byte();
+
+
+            this->cs_pin_->digital_write(true);
+
+
+            return value;
+        }
+
+
+        void CC1101::write_register(uint8_t reg, uint8_t value) {
+
+            this->cs_pin_->digital_write(false);
+
+
+            this->spi_->write_byte(reg);
+            this->spi_->write_byte(value);
+
+
+            this->cs_pin_->digital_write(true);
         }
 
 
