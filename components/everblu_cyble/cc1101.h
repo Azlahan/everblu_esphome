@@ -4,7 +4,8 @@
 
 #include "esphome/core/component.h"
 #include "esphome/core/gpio.h"
-#include "esphome/components/spi/spi.h"
+
+#include <SPI.h>
 
 #include "registers.h"
 
@@ -16,16 +17,14 @@ namespace esphome {
 #define CC1101_FIFO_SIZE 64
 
 
-
-        class CC1101 : public Component,
-                       public spi::SPIDevice {
+        class CC1101 : public Component {
 
 
         public:
 
 
             // --------------------------------------------------
-            // Configuration GPIO
+            // Configuration pins
             // --------------------------------------------------
 
             void set_cs_pin(GPIOPin *pin);
@@ -42,7 +41,7 @@ namespace esphome {
 
             void setup() override;
 
-            void loop() override {}
+            void loop() override;
 
 
 
@@ -50,24 +49,26 @@ namespace esphome {
             // SPI
             // --------------------------------------------------
 
-            uint8_t transfer_byte(
+            uint8_t transfer(
                     uint8_t data
             );
 
 
 
             // --------------------------------------------------
-            // Radio
+            // CC1101 commandes
             // --------------------------------------------------
 
-            void receive();
+            void reset();
 
-            void transmit();
+            void strobe(
+                    uint8_t command
+            );
 
 
 
             // --------------------------------------------------
-            // Registres CC1101
+            // Registres
             // --------------------------------------------------
 
             void write_reg(
@@ -83,7 +84,7 @@ namespace esphome {
 
 
             // --------------------------------------------------
-            // Burst SPI
+            // Burst
             // --------------------------------------------------
 
             void write_burst(
@@ -118,17 +119,17 @@ namespace esphome {
 
 
             // --------------------------------------------------
-            // Command strobes
+            // Radio
             // --------------------------------------------------
 
-            void strobe(
-                    uint8_t command
-            );
+            void rx();
+
+            void tx();
 
 
 
             // --------------------------------------------------
-            // Identification
+            // Diagnostic
             // --------------------------------------------------
 
             uint8_t get_version();
