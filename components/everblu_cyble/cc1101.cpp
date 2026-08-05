@@ -18,7 +18,7 @@ namespace esphome {
 // Configuration
 // --------------------------------------------------
 
-        void CC1101::set_spi(spi::SPIComponent *spi)
+        void CC1101::set_spi(spi::SPIDevice *spi)
         {
             this->spi_ = spi;
         }
@@ -115,19 +115,14 @@ namespace esphome {
             uint8_t response = 0;
 
 
-            /*
-               ESPHome SPI actuel utilise l'objet SPIComponent
-               via write_byte()
-            */
-
-            this->spi_->write_byte(
-                    data,
-                    &response
+            this->spi_->transfer(
+                    &data,
+                    &response,
+                    1
             );
 
 
             return response;
-
         }
 
 

@@ -29,7 +29,7 @@ namespace esphome {
             // --------------------------------------------------
 
             void set_spi(
-                    spi::SPIComponent *spi
+                    spi::SPIDevice *spi
             );
 
 
@@ -157,7 +157,7 @@ namespace esphome {
         protected:
 
 
-            spi::SPIComponent *spi_{nullptr};
+            spi::SPIDevice *spi_{nullptr};
 
 
             GPIOPin *cs_pin_{nullptr};
