@@ -93,7 +93,6 @@ namespace esphome {
 
 
 
-            this->setup_spi();
 
 
 
@@ -136,13 +135,10 @@ namespace esphome {
             uint8_t response = 0;
 
 
-
-            this->transfer(
-                    &data,
-                    &response,
-                    1
+            this->spi_transfer_byte(
+                    data,
+                    &response
             );
-
 
 
             return response;
