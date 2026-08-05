@@ -18,20 +18,21 @@ namespace esphome {
 
 
 
-        class CC1101 : public Component {
+        class CC1101 :
+                public Component,
+                public spi::SPIDevice<
+                        spi::BIT_ORDER_MSB_FIRST,
+                        spi::CLOCK_POLARITY_LOW,
+                        spi::CLOCK_PHASE_LEADING,
+                        spi::DATA_RATE_8MHZ
+                >
+        {
 
 
         public:
 
 
-            // --------------------------------------------------
             // Configuration
-            // --------------------------------------------------
-
-            void set_spi(
-                    spi::SPIDevice *spi
-            );
-
 
             void set_cs_pin(
                     GPIOPin *pin
@@ -49,9 +50,7 @@ namespace esphome {
 
 
 
-            // --------------------------------------------------
             // ESPHome
-            // --------------------------------------------------
 
             void setup() override;
 
@@ -59,9 +58,7 @@ namespace esphome {
 
 
 
-            // --------------------------------------------------
             // SPI
-            // --------------------------------------------------
 
             uint8_t transfer_byte(
                     uint8_t data
@@ -69,14 +66,9 @@ namespace esphome {
 
 
 
-            // --------------------------------------------------
             // CC1101
-            // --------------------------------------------------
 
             void reset();
-
-
-            void configure_everblu();
 
 
             void strobe(
@@ -84,10 +76,6 @@ namespace esphome {
             );
 
 
-
-            // --------------------------------------------------
-            // Registres
-            // --------------------------------------------------
 
             void write_reg(
                     uint8_t addr,
@@ -100,10 +88,6 @@ namespace esphome {
             );
 
 
-
-            // --------------------------------------------------
-            // Burst
-            // --------------------------------------------------
 
             void write_burst(
                     uint8_t addr,
@@ -120,10 +104,6 @@ namespace esphome {
 
 
 
-            // --------------------------------------------------
-            // FIFO
-            // --------------------------------------------------
-
             uint8_t read_fifo(
                     uint8_t *buffer
             );
@@ -136,19 +116,12 @@ namespace esphome {
 
 
 
-            // --------------------------------------------------
-            // Radio
-            // --------------------------------------------------
-
             void rx();
+
 
             void tx();
 
 
-
-            // --------------------------------------------------
-            // Identification
-            // --------------------------------------------------
 
             uint8_t get_version();
 
@@ -157,12 +130,11 @@ namespace esphome {
         protected:
 
 
-            spi::SPIDevice *spi_{nullptr};
-
-
             GPIOPin *cs_pin_{nullptr};
 
+
             GPIOPin *gdo0_pin_{nullptr};
+
 
             GPIOPin *gdo2_pin_{nullptr};
 
