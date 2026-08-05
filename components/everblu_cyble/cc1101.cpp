@@ -13,7 +13,6 @@ namespace esphome {
         CC1101 cc1101;
 
 
-
 // --------------------------------------------------
 // Configuration
 // --------------------------------------------------
@@ -51,7 +50,7 @@ namespace esphome {
 
 
 // --------------------------------------------------
-// Setup
+// ESPHome
 // --------------------------------------------------
 
         void CC1101::setup()
@@ -88,13 +87,11 @@ namespace esphome {
             delay(10);
 
 
-            uint8_t version = this->get_version();
-
 
             ESP_LOGI(
                     TAG,
                     "CC1101 VERSION 0x%02X",
-                    version
+                    this->get_version()
             );
 
         }
@@ -113,9 +110,18 @@ namespace esphome {
                 return 0;
 
 
-            return this->spi_->transfer_byte(
-                    data
+            uint8_t rx = 0;
+
+
+            this->spi_->write_read(
+                    &data,
+                    1,
+                    &rx,
+                    1
             );
+
+
+            return rx;
 
         }
 
@@ -145,6 +151,7 @@ namespace esphome {
                 this->cs_pin_->digital_write(true);
 
         }
+
 
 
 
@@ -202,7 +209,8 @@ namespace esphome {
             );
 
 
-            for(uint8_t i=0;i<length;i++)
+
+            for(uint8_t i = 0; i < length; i++)
             {
                 this->transfer_byte(
                         buffer[i]
@@ -215,6 +223,7 @@ namespace esphome {
                 this->cs_pin_->digital_write(true);
 
         }
+
 
 
 
@@ -234,7 +243,8 @@ namespace esphome {
             );
 
 
-            for(uint8_t i=0;i<length;i++)
+
+            for(uint8_t i = 0; i < length; i++)
             {
                 buffer[i] =
                         this->transfer_byte(0);
@@ -250,7 +260,7 @@ namespace esphome {
 
 
 // --------------------------------------------------
-// Commandes
+// Commandes CC1101
 // --------------------------------------------------
 
         void CC1101::strobe(
@@ -265,6 +275,7 @@ namespace esphome {
             this->transfer_byte(
                     command
             );
+
 
 
             if (this->cs_pin_ != nullptr)
@@ -283,13 +294,16 @@ namespace esphome {
 
             ESP_LOGD(
                     TAG,
-                    "Passage CC1101 RX"
+                    "CC1101 RX"
             );
 
 
-            this->strobe(SRX);
+            this->strobe(
+                    SRX
+            );
 
         }
+
 
 
 
@@ -298,11 +312,13 @@ namespace esphome {
 
             ESP_LOGD(
                     TAG,
-                    "Passage CC1101 TX"
+                    "CC1101 TX"
             );
 
 
-            this->strobe(STX);
+            this->strobe(
+                    STX
+            );
 
         }
 
@@ -316,24 +332,35 @@ namespace esphome {
                 uint8_t *buffer)
         {
 
-            uint8_t count =
-                    this->read_reg(RXBYTES)
-                    & 0x7F;
+            uint8_t length =
+                    this->read_reg(
+                            RXBYTES
+                    ) & 0x7F;
 
 
-            if(count > 0)
-            {
-                this->read_burst(
-                        RXFIFO,
-                        buffer,
-                        count
-                );
-            }
+
+            if(length == 0)
+                return 0;
 
 
-            return count;
+
+            if(length > CC1101_FIFO_SIZE)
+                length = CC1101_FIFO_SIZE;
+
+
+
+            this->read_burst(
+                    RXFIFO,
+                    buffer,
+                    length
+            );
+
+
+
+            return length;
 
         }
+
 
 
 
@@ -353,7 +380,7 @@ namespace esphome {
 
 
 // --------------------------------------------------
-// Version
+// Identification
 // --------------------------------------------------
 
         uint8_t CC1101::get_version()
