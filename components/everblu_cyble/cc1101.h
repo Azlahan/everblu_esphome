@@ -8,7 +8,8 @@
 namespace esphome {
     namespace everblu_cyble {
 
-        class CC1101 : public Component {
+        class CC1101 : public Component,
+                       public spi::SPIDevice {
 
         public:
             void setup() override;
